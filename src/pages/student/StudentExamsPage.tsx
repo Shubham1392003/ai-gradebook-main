@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FileText, Clock, Play, CheckCircle2, XCircle, ShieldAlert } from "lucide-react";
+import { FileText, Clock, Play, CheckCircle2, XCircle, ShieldAlert, CalendarDays } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -226,7 +226,11 @@ const StudentExamsPage = () => {
             const subInfo = submissions[exam.id];
             const subStatus = subInfo?.status;
             const grievanceStatus = subInfo?.grievanceStatus;
-            const canTake = exam.status === "active" && (!subStatus || subStatus === "in_progress");
+
+            const isLive = exam.status === "active" || (exam.status === "scheduled" && exam.scheduled_at && new Date(exam.scheduled_at).getTime() <= Date.now());
+            const displayStatus = isLive && exam.status !== "completed" ? "active" : exam.status;
+
+            const canTake = displayStatus === "active" && (!subStatus || subStatus === "in_progress");
 
             return (
               <motion.div
@@ -240,10 +244,16 @@ const StudentExamsPage = () => {
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-charcoal/10">
                     <FileText className="h-5 w-5 text-charcoal" />
                   </div>
-                  {statusBadge(exam.status, subStatus)}
+                  {statusBadge(displayStatus, subStatus)}
                 </div>
                 <h3 className="font-semibold text-foreground">{exam.title}</h3>
                 <p className="text-xs text-muted-foreground mt-1">{exam.subject} • {exam.class_name}</p>
+                {exam.scheduled_at && (
+                  <p className="text-xs text-primary font-medium mt-1.5 flex items-center gap-1.5">
+                    <CalendarDays className="h-3.5 w-3.5" />
+                    Scheduled: {new Date(exam.scheduled_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
+                  </p>
+                )}
                 <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{exam.duration_minutes} min</span>
                   <span>{exam.total_marks} marks</span>
