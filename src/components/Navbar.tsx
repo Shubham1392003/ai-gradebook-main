@@ -7,6 +7,7 @@ import {
   Shield, BarChart3, GraduationCap, Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { StudentProfileDialog } from "@/components/StudentProfileDialog";
 
 const Navbar = () => {
   const { user, role, signOut } = useAuth();
@@ -23,17 +24,17 @@ const Navbar = () => {
   const navLinks = user
     ? role === "teacher"
       ? [
-          { to: "/teacher", label: "Dashboard", icon: LayoutDashboard },
-          { to: "/teacher/exams", label: "Exams", icon: FileText },
-          { to: "/teacher/grievances", label: "Grievances", icon: Shield },
-          { to: "/teacher/analytics", label: "Analytics", icon: BarChart3 },
-        ]
+        { to: "/teacher", label: "Dashboard", icon: LayoutDashboard },
+        { to: "/teacher/exams", label: "Exams", icon: FileText },
+        { to: "/teacher/grievances", label: "Grievances", icon: Shield },
+        { to: "/teacher/analytics", label: "Analytics", icon: BarChart3 },
+      ]
       : [
-          { to: "/student", label: "Dashboard", icon: LayoutDashboard },
-          { to: "/student/exams", label: "My Exams", icon: FileText },
-          { to: "/student/grievances", label: "Grievances", icon: Shield },
-          { to: "/student/scorecards", label: "Scorecards", icon: GraduationCap },
-        ]
+        { to: "/student", label: "Dashboard", icon: LayoutDashboard },
+        { to: "/student/exams", label: "My Exams", icon: FileText },
+        { to: "/student/grievances", label: "Grievances", icon: Shield },
+        { to: "/student/scorecards", label: "Scorecards", icon: GraduationCap },
+      ]
     : [];
 
   return (
@@ -42,11 +43,10 @@ const Navbar = () => {
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className={`w-full max-w-5xl rounded-full border transition-all duration-300 ${
-          scrolled
-            ? "bg-white backdrop-blur-xl border-foreground/15 shadow-xl shadow-black/8"
-            : "bg-white backdrop-blur-xl border-foreground/10 shadow-lg shadow-black/5"
-        }`}
+        className={`w-full max-w-5xl rounded-full border transition-all duration-300 ${scrolled
+          ? "bg-white backdrop-blur-xl border-foreground/15 shadow-xl shadow-black/8"
+          : "bg-white backdrop-blur-xl border-foreground/10 shadow-lg shadow-black/5"
+          }`}
       >
         <div className="flex h-14 items-center justify-between px-6">
           {/* Logo */}
@@ -66,11 +66,10 @@ const Navbar = () => {
                 <Link
                   key={link.to}
                   to={link.to}
-                  className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-200 ${
-                    active
-                      ? "text-primary"
-                      : "text-foreground/70 hover:text-primary"
-                  }`}
+                  className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-200 ${active
+                    ? "text-primary"
+                    : "text-foreground/70 hover:text-primary"
+                    }`}
                 >
                   <Icon className="h-4 w-4" />
                   {link.label}
@@ -90,9 +89,17 @@ const Navbar = () => {
           <div className="flex items-center gap-2">
             {user ? (
               <>
-                <span className="hidden text-xs font-semibold sm:block px-3 py-1 rounded-full bg-primary/10 text-primary">
-                  {role === "teacher" ? "Teacher" : "Student"}
-                </span>
+                {role === "student" ? (
+                  <StudentProfileDialog>
+                    <button className="hidden text-xs font-semibold sm:block px-3 py-1 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors cursor-pointer">
+                      {user.user_metadata?.full_name || "Student"}
+                    </button>
+                  </StudentProfileDialog>
+                ) : (
+                  <span className="hidden text-xs font-semibold sm:block px-3 py-1 rounded-full bg-primary/10 text-primary">
+                    Teacher
+                  </span>
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
@@ -140,11 +147,10 @@ const Navbar = () => {
                       key={link.to}
                       to={link.to}
                       onClick={() => setMobileOpen(false)}
-                      className={`flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
-                        active
-                          ? "text-primary bg-primary/5"
-                          : "text-foreground/70 hover:text-primary hover:bg-primary/5"
-                      }`}
+                      className={`flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${active
+                        ? "text-primary bg-primary/5"
+                        : "text-foreground/70 hover:text-primary hover:bg-primary/5"
+                        }`}
                     >
                       <Icon className="h-4 w-4" />
                       {link.label}

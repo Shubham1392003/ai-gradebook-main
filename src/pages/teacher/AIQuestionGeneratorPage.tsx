@@ -16,6 +16,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select";
 import { generateQuestionsWithGemini } from "@/lib/gemini";
+import { CLASS_OPTIONS } from "@/lib/constants";
 
 type GeneratedQuestion = {
   question_text: string;
@@ -25,7 +26,6 @@ type GeneratedQuestion = {
   marks: number;
 };
 
-const gradeOptions = Array.from({ length: 12 }, (_, i) => `Class ${i + 1}`).concat(["Undergraduate", "Postgraduate"]);
 const typeOptions = [
   { value: "mcq", label: "MCQ" },
   { value: "msq", label: "MSQ (Multiple Select)" },
@@ -41,7 +41,7 @@ const AIQuestionGeneratorPage = () => {
 
   const [subject, setSubject] = useState("");
   const [topic, setTopic] = useState("");
-  const [gradeLevel, setGradeLevel] = useState("Undergraduate");
+  const [className, setClassName] = useState(CLASS_OPTIONS[0]);
   const [questionType, setQuestionType] = useState("mcq");
   const [count, setCount] = useState(5);
   const [generating, setGenerating] = useState(false);
@@ -50,18 +50,17 @@ const AIQuestionGeneratorPage = () => {
 
   // Exam metadata for saving
   const [examTitle, setExamTitle] = useState("");
-  const [className, setClassName] = useState("");
   const [duration, setDuration] = useState(60);
 
   const handleGenerate = async () => {
-    if (!subject || !topic) {
-      toast({ title: "Missing fields", description: "Please fill in subject and topic.", variant: "destructive" });
+    if (!subject || !topic || !className) {
+      toast({ title: "Missing fields", description: "Please fill in subject, topic, and class name.", variant: "destructive" });
       return;
     }
     setGenerating(true);
     try {
       const generatedQuestions = await generateQuestionsWithGemini(
-        subject, topic, gradeLevel, questionType, count
+        subject, topic, className, questionType, count
       );
       setQuestions(generatedQuestions || []);
       if (generatedQuestions?.length) {
@@ -170,15 +169,15 @@ const AIQuestionGeneratorPage = () => {
 
             <div className="space-y-4">
               <div>
-                <Label className="text-xs text-muted-foreground">Grade Level</Label>
+                <Label className="text-xs text-muted-foreground">Class Name</Label>
                 <div className="mt-1.5 flex flex-col gap-1.5">
-                  <Select value={gradeLevel} onValueChange={setGradeLevel}>
+                  <Select value={className} onValueChange={setClassName}>
                     <SelectTrigger className="w-full rounded-xl bg-card">
-                      <SelectValue placeholder="Select Grade Level" />
+                      <SelectValue placeholder="Select Class" />
                     </SelectTrigger>
                     <SelectContent>
-                      {gradeOptions.map((g) => (
-                        <SelectItem key={g} value={g}>{g}</SelectItem>
+                      {CLASS_OPTIONS.map((c) => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -192,11 +191,10 @@ const AIQuestionGeneratorPage = () => {
                     <button
                       key={t.value}
                       onClick={() => setQuestionType(t.value)}
-                      className={`rounded-xl px-3 py-1.5 text-xs font-medium transition-all ${
-                        questionType === t.value
-                          ? "bg-charcoal text-charcoal-foreground shadow-sm"
-                          : "bg-muted text-muted-foreground hover:bg-muted/80"
-                      }`}
+                      className={`rounded-xl px-3 py-1.5 text-xs font-medium transition-all ${questionType === t.value
+                        ? "bg-charcoal text-charcoal-foreground shadow-sm"
+                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                        }`}
                     >
                       {t.label}
                     </button>
@@ -227,7 +225,7 @@ const AIQuestionGeneratorPage = () => {
               </div>
 
               <div>
-                <Label className="text-xs text-muted-foreground">Number of Questions Tracker</Label>
+                <Label className="text-xs text-muted-foreground">Number of Questions</Label>
                 <Input
                   type="number"
                   min={1}
@@ -255,42 +253,39 @@ const AIQuestionGeneratorPage = () => {
 
           {/* Save as Exam panel */}
           <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="rounded-2xl border border-border bg-card p-5"
-            >
-              <div className="flex items-center gap-2 mb-4">
-                <FileText className="h-4 w-4 text-muted-foreground" />
-                <h3 className="font-semibold text-foreground">Save as Exam</h3>
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl border border-border bg-card p-5"
+          >
+            <div className="flex items-center gap-2 mb-4">
+              <FileText className="h-4 w-4 text-muted-foreground" />
+              <h3 className="font-semibold text-foreground">Save as Exam</h3>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="examTitle" className="text-xs text-muted-foreground">Exam Title</Label>
+                <Input id="examTitle" value={examTitle} onChange={(e) => setExamTitle(e.target.value)} placeholder="Midterm Exam" className="mt-1 rounded-xl" />
               </div>
-              <div className="space-y-3">
-                <div>
-                  <Label htmlFor="examTitle" className="text-xs text-muted-foreground">Exam Title</Label>
-                  <Input id="examTitle" value={examTitle} onChange={(e) => setExamTitle(e.target.value)} placeholder="Midterm Exam" className="mt-1 rounded-xl" />
-                </div>
-                <div>
-                  <Label htmlFor="className" className="text-xs text-muted-foreground">Class Name</Label>
-                  <Input id="className" value={className} onChange={(e) => setClassName(e.target.value)} placeholder="CS-101" className="mt-1 rounded-xl" />
-                </div>
-                <div>
-                  <Label htmlFor="duration" className="text-xs text-muted-foreground">Duration (minutes)</Label>
-                  <Input id="duration" type="number" value={duration} onChange={(e) => setDuration(Number(e.target.value))} className="mt-1 rounded-xl" />
-                </div>
-                <Button
-                  onClick={handleSaveAsExam}
-                  disabled={saving || questions.length === 0}
-                  className="w-full rounded-xl h-11 gap-2"
-                >
-                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
-                  {saving ? "Saving..." : "Save & Create Exam"}
-                </Button>
-                {questions.length === 0 && (
-                  <p className="text-[10px] text-muted-foreground text-center">
-                    You must generate questions before you can save an exam.
-                  </p>
-                )}
+
+              <div>
+                <Label htmlFor="duration" className="text-xs text-muted-foreground">Duration (minutes)</Label>
+                <Input id="duration" type="number" value={duration} onChange={(e) => setDuration(Number(e.target.value))} className="mt-1 rounded-xl" />
               </div>
-            </motion.div>
+              <Button
+                onClick={handleSaveAsExam}
+                disabled={saving || questions.length === 0}
+                className="w-full rounded-xl h-11 gap-2"
+              >
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+                {saving ? "Saving..." : "Save & Create Exam"}
+              </Button>
+              {questions.length === 0 && (
+                <p className="text-[10px] text-muted-foreground text-center">
+                  You must generate questions before you can save an exam.
+                </p>
+              )}
+            </div>
+          </motion.div>
         </motion.div>
 
         {/* Generated Questions Preview */}
@@ -306,14 +301,14 @@ const AIQuestionGeneratorPage = () => {
                 <h3 className="font-semibold text-foreground">Generated Questions</h3>
               </div>
               <div className="flex items-center gap-3">
-                <Button 
-                   onClick={addManualQuestion} 
-                   variant="outline" 
-                   size="sm" 
-                   className="gap-1.5 h-8 text-xs"
+                <Button
+                  onClick={addManualQuestion}
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 h-8 text-xs"
                 >
-                   <PlusCircle className="h-3.5 w-3.5" />
-                   Add Question
+                  <PlusCircle className="h-3.5 w-3.5" />
+                  Add Question
                 </Button>
                 {questions.length > 0 && (
                   <span className="text-xs font-medium text-primary bg-primary/10 px-2.5 py-1 rounded-lg">
@@ -384,18 +379,18 @@ const AIQuestionGeneratorPage = () => {
                               {q.question_type} • {q.marks} marks
                             </span>
                           </div>
-                          <Textarea 
-                             value={q.question_text}
-                             onChange={(e) => updateQuestion(i, "question_text", e.target.value)}
-                             className="mt-2 min-h-[60px] text-sm font-medium" 
+                          <Textarea
+                            value={q.question_text}
+                            onChange={(e) => updateQuestion(i, "question_text", e.target.value)}
+                            className="mt-2 min-h-[60px] text-sm font-medium"
                           />
                           {q.options && (
                             <div className="mt-3 flex flex-col gap-2">
                               {q.options.map((opt, oi) => (
                                 <div key={oi} className="flex items-center gap-2">
                                   <div className={`h-2 w-2 rounded-full ${q.correct_answer?.includes(opt) ? 'bg-success' : 'bg-muted'}`} />
-                                  <Input 
-                                    value={opt} 
+                                  <Input
+                                    value={opt}
                                     onChange={(e) => {
                                       const newOpts = [...q.options!];
                                       newOpts[oi] = e.target.value;
@@ -409,10 +404,10 @@ const AIQuestionGeneratorPage = () => {
                           )}
                           <div className="mt-3">
                             <Label className="text-[10px] text-muted-foreground uppercase">Correct Answer (or Model Answer)</Label>
-                            <Input 
-                               value={q.correct_answer}
-                               onChange={(e) => updateQuestion(i, "correct_answer", e.target.value)}
-                               className="mt-1 h-8 text-xs border-success/30 focus-visible:ring-success"
+                            <Input
+                              value={q.correct_answer}
+                              onChange={(e) => updateQuestion(i, "correct_answer", e.target.value)}
+                              className="mt-1 h-8 text-xs border-success/30 focus-visible:ring-success"
                             />
                           </div>
                         </div>

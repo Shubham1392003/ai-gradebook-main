@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { FileText, Clock, Play, CheckCircle2, XCircle, ShieldAlert } from "lucide-react";
 import {
   Dialog,
@@ -14,8 +16,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { CLASS_OPTIONS } from "@/lib/constants";
 
 type ExamRow = {
   id: string;
@@ -47,12 +53,27 @@ const StudentExamsPage = () => {
   const [isSubmittingGrievance, setIsSubmittingGrievance] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
+  // Class configuration state
+  const [missingClassDialog, setMissingClassDialog] = useState(false);
+  const [newClassName, setNewClassName] = useState("");
+  const [savingClass, setSavingClass] = useState(false);
+
   const loadData = async () => {
     if (!user) return;
+
+    // Check if the student has a class assigned
+    const studentClass = user.user_metadata?.class_name;
+    if (!studentClass) {
+      setMissingClassDialog(true);
+      setLoading(false);
+      return;
+    }
+
     const { data: examData } = await supabase
       .from("exams")
       .select("*")
       .in("status", ["scheduled", "active", "completed"])
+      .eq("class_name", studentClass)
       .order("created_at", { ascending: false });
 
     setExams((examData || []) as ExamRow[]);
@@ -145,6 +166,39 @@ const StudentExamsPage = () => {
     setSelectedSubmissionId(submissionId);
     setGrievanceReason("");
     setIsDialogOpen(true);
+  };
+
+  const handleSaveClass = async () => {
+    if (!newClassName.trim() || !user) return;
+
+    setSavingClass(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: { class_name: newClassName.trim() }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Class updated",
+        description: `You are now enrolled in ${newClassName.trim()}.`,
+      });
+
+      setMissingClassDialog(false);
+      setLoading(true);
+
+      // Update local user object manually if needed or just reload data
+      user.user_metadata.class_name = newClassName.trim();
+      loadData();
+    } catch (error: any) {
+      toast({
+        title: "Failed to update class",
+        description: error.message || "An error occurred.",
+        variant: "destructive"
+      });
+    } finally {
+      setSavingClass(false);
+    }
   };
 
   if (loading) {
@@ -242,6 +296,7 @@ const StudentExamsPage = () => {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        {/* Existing Grievance Dialog */}
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Raise Grievance</DialogTitle>
@@ -264,6 +319,39 @@ const StudentExamsPage = () => {
             </Button>
             <Button onClick={handleApplyGrievance} disabled={isSubmittingGrievance}>
               {isSubmittingGrievance ? "Submitting..." : "Submit Grievance"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={missingClassDialog} onOpenChange={setMissingClassDialog}>
+        <DialogContent className="sm:max-w-[425px]" onInteractOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
+          <DialogHeader>
+            <DialogTitle>Set Your Class</DialogTitle>
+            <DialogDescription>
+              We need to know your class to show you the correct exams. Please enter your class name exactly as provided by your teacher.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="class-name">Class Name</Label>
+              <Select value={newClassName} onValueChange={setNewClassName}>
+                <SelectTrigger id="class-name">
+                  <SelectValue placeholder="Select Class" />
+                </SelectTrigger>
+                <SelectContent>
+                  {CLASS_OPTIONS.map((cls) => (
+                    <SelectItem key={cls} value={cls}>
+                      {cls}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleSaveClass} disabled={savingClass || !newClassName.trim()}>
+              {savingClass ? "Saving..." : "Save Class"}
             </Button>
           </DialogFooter>
         </DialogContent>

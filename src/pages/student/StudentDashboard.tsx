@@ -7,6 +7,16 @@ import {
   FileText, BarChart3, Shield, GraduationCap, BookOpen,
   TrendingUp, Award, Clock, ArrowRight
 } from "lucide-react";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { CLASS_OPTIONS } from "@/lib/constants";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -15,7 +25,11 @@ const fadeUp = {
 
 const StudentDashboard = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [stats, setStats] = useState({ upcoming: 0, completed: 0, avgScore: "--", grievances: 0 });
+  const [isClassDialogOpen, setIsClassDialogOpen] = useState(false);
+  const [newClassName, setNewClassName] = useState("");
+  const [savingClass, setSavingClass] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -35,6 +49,26 @@ const StudentDashboard = () => {
     fetchStats();
   }, [user]);
 
+  const handleUpdateClass = async () => {
+    if (!newClassName.trim() || !user) return;
+    setSavingClass(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: { class_name: newClassName.trim() }
+      });
+      if (error) throw error;
+      toast({ title: "Class Updated", description: `You are now in ${newClassName.trim()}.` });
+      user.user_metadata.class_name = newClassName.trim();
+      setIsClassDialogOpen(false);
+    } catch (error: any) {
+      toast({ title: "Failed to update class", description: error.message, variant: "destructive" });
+    } finally {
+      setSavingClass(false);
+    }
+  };
+
+  const studentClass = user?.user_metadata?.class_name || "Unassigned Class";
+
   const statCards = [
     { label: "In Progress", value: stats.upcoming.toString(), icon: Clock, color: "bg-primary" },
     { label: "Completed", value: stats.completed.toString(), icon: FileText, color: "bg-success" },
@@ -51,11 +85,25 @@ const StudentDashboard = () => {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-        <h1 className="text-2xl font-bold text-foreground">
-          Welcome back, <span className="text-primary">Student</span>
-        </h1>
-        <p className="mt-1 text-muted-foreground">Track your exams, scores, and academic progress.</p>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-between items-start">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">
+            Welcome back, <span className="text-primary">{user?.user_metadata?.full_name || "Student"}</span>
+          </h1>
+          <p className="mt-1 text-muted-foreground flex items-center gap-2">
+            <GraduationCap className="h-4 w-4" />
+            {studentClass}
+            <button
+              onClick={() => {
+                setNewClassName(user?.user_metadata?.class_name || "");
+                setIsClassDialogOpen(true);
+              }}
+              className="text-primary text-xs hover:underline"
+            >
+              (Edit)
+            </button>
+          </p>
+        </div>
       </motion.div>
 
       {/* Stats */}
@@ -128,6 +176,41 @@ const StudentDashboard = () => {
           <p className="text-sm">Complete your first exam to see performance analytics here.</p>
         </div>
       </motion.div>
+      <Dialog open={isClassDialogOpen} onOpenChange={setIsClassDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Update Your Class</DialogTitle>
+            <DialogDescription>
+              Enter the exact class name provided by your teacher (e.g. 10th Grade, Section A).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="class-name">Class Name</Label>
+              <Select value={newClassName} onValueChange={setNewClassName}>
+                <SelectTrigger id="class-name">
+                  <SelectValue placeholder="Select Class" />
+                </SelectTrigger>
+                <SelectContent>
+                  {CLASS_OPTIONS.map((cls) => (
+                    <SelectItem key={cls} value={cls}>
+                      {cls}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsClassDialogOpen(false)} disabled={savingClass}>
+              Cancel
+            </Button>
+            <Button onClick={handleUpdateClass} disabled={savingClass || !newClassName.trim()}>
+              {savingClass ? "Saving..." : "Save Class"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

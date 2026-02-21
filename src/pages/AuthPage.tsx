@@ -5,14 +5,19 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
+} from "@/components/ui/select";
 import { BookOpen, GraduationCap, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { CLASS_OPTIONS } from "@/lib/constants";
 
 const AuthPage = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [className, setClassName] = useState("");
   const [role, setRole] = useState<"teacher" | "student">("student");
   const [loading, setLoading] = useState(false);
   const { signIn, signUp } = useAuth();
@@ -24,7 +29,10 @@ const AuthPage = () => {
     setLoading(true);
     try {
       if (isSignUp) {
-        await signUp(email, password, fullName, role);
+        if (role === "student" && !className.trim()) {
+          throw new Error("Class name is required for students");
+        }
+        await signUp(email, password, fullName, role, role === "student" ? className.trim() : undefined);
         toast({
           title: "Account created!",
           description: "Please check your email to verify your account before signing in.",
@@ -90,11 +98,10 @@ const AuthPage = () => {
                         key={r}
                         type="button"
                         onClick={() => setRole(r)}
-                        className={`flex items-center justify-center gap-2 rounded-lg border-2 px-4 py-3 text-sm font-medium transition-all ${
-                          role === r
-                            ? "border-charcoal bg-charcoal/5 text-charcoal"
-                            : "border-border text-muted-foreground hover:border-primary/30"
-                        }`}
+                        className={`flex items-center justify-center gap-2 rounded-lg border-2 px-4 py-3 text-sm font-medium transition-all ${role === r
+                          ? "border-charcoal bg-charcoal/5 text-charcoal"
+                          : "border-border text-muted-foreground hover:border-primary/30"
+                          }`}
                       >
                         {r === "student" ? (
                           <GraduationCap className="h-4 w-4" />
@@ -106,6 +113,23 @@ const AuthPage = () => {
                     ))}
                   </div>
                 </div>
+                {role === "student" && (
+                  <div>
+                    <Label htmlFor="className">Class Name</Label>
+                    <Select value={className} onValueChange={setClassName}>
+                      <SelectTrigger id="className">
+                        <SelectValue placeholder="Select Class" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CLASS_OPTIONS.map((cls) => (
+                          <SelectItem key={cls} value={cls}>
+                            {cls}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </>
             )}
             <div>

@@ -9,7 +9,7 @@ interface AuthContextType {
   session: Session | null;
   role: UserRole;
   loading: boolean;
-  signUp: (email: string, password: string, fullName: string, role: "teacher" | "student") => Promise<void>;
+  signUp: (email: string, password: string, fullName: string, role: "teacher" | "student", className?: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -25,9 +25,9 @@ export const useAuth = () => {
       session: null,
       role: null as UserRole,
       loading: true,
-      signUp: async () => {},
-      signIn: async () => {},
-      signOut: async () => {},
+      signUp: async () => { },
+      signIn: async () => { },
+      signOut: async () => { },
     } as AuthContextType;
   }
   return ctx;
@@ -50,13 +50,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .select("role")
         .eq("user_id", userId)
         .maybeSingle();
-      
+
       if (error) {
         console.error("Error fetching user role:", error);
       }
-      
+
       let fetchedRole = data?.role;
-      
+
       // Self-healing: If no role in DB, check metadata and gracefully insert it since we now have a session
       if (!fetchedRole && metadataRole) {
         fetchedRole = metadataRole as UserRole;
@@ -66,7 +66,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           console.error("Self-healing role insert failed:", insertErr);
         }
       }
-      
+
       setRole((fetchedRole as UserRole) ?? "student");
     } finally {
       setFetchingRole(false);
@@ -113,23 +113,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
-  const signUp = async (email: string, password: string, fullName: string, role: "teacher" | "student") => {
+  const signUp = async (email: string, password: string, fullName: string, role: "teacher" | "student", className?: string) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { full_name: fullName, role },
+        data: {
+          full_name: fullName,
+          role,
+          ...(className ? { class_name: className } : {})
+        },
         emailRedirectTo: window.location.origin,
       },
     });
     if (error) throw error;
-    
+
     // Only attempt insert if we get a session synchronously (no email confirmation needed)
     if (data.session && data.user) {
       const { error: roleError } = await supabase.from("user_roles").insert({ user_id: data.user.id, role });
       if (roleError) console.error("Role insertion failed:", roleError);
     }
-    
+
     setRole(role);
   };
 
