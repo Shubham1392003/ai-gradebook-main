@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, User } from "lucide-react";
+import { CLASS_OPTIONS } from "@/lib/constants";
 
 export const StudentProfileDialog = ({ children }: { children: React.ReactNode }) => {
     const { user } = useAuth();
@@ -24,7 +25,7 @@ export const StudentProfileDialog = ({ children }: { children: React.ReactNode }
 
     const [fullName, setFullName] = useState("");
     const [regNumber, setRegNumber] = useState("");
-    const [division, setDivision] = useState("");
+    const [className, setClassName] = useState("");
     const [gender, setGender] = useState("");
     const [saving, setSaving] = useState(false);
 
@@ -32,7 +33,7 @@ export const StudentProfileDialog = ({ children }: { children: React.ReactNode }
         if (user && open) {
             setFullName(user.user_metadata?.full_name || "");
             setRegNumber(user.user_metadata?.reg_number || "");
-            setDivision(user.user_metadata?.division || "");
+            setClassName(user.user_metadata?.class_name || "");
             setGender(user.user_metadata?.gender || "");
         }
     }, [user, open]);
@@ -45,7 +46,7 @@ export const StudentProfileDialog = ({ children }: { children: React.ReactNode }
                 data: {
                     full_name: fullName,
                     reg_number: regNumber,
-                    division: division,
+                    class_name: className,
                     gender: gender,
                 }
             });
@@ -60,7 +61,7 @@ export const StudentProfileDialog = ({ children }: { children: React.ReactNode }
             // Update local context manually so changes reflect immediately
             user.user_metadata.full_name = fullName;
             user.user_metadata.reg_number = regNumber;
-            user.user_metadata.division = division;
+            user.user_metadata.class_name = className;
             user.user_metadata.gender = gender;
 
             setOpen(false);
@@ -111,13 +112,19 @@ export const StudentProfileDialog = ({ children }: { children: React.ReactNode }
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="division">Division</Label>
-                            <Input
-                                id="division"
-                                value={division}
-                                onChange={(e) => setDivision(e.target.value)}
-                                placeholder="e.g. A"
-                            />
+                            <Label htmlFor="className">Class</Label>
+                            <Select value={className} onValueChange={setClassName}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select Class" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {CLASS_OPTIONS.map((cls) => (
+                                        <SelectItem key={cls} value={cls}>
+                                            {cls}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="grid gap-2">
                             <Label>Gender</Label>
