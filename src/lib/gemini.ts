@@ -1,4 +1,4 @@
-const GEMINI_API_KEY = "AIzaSyAumY7-PI2H8v_WhTIJvlWGOKswGN-0PXA"; // provided by the user
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY; // provided by the user
 
 export const generateQuestionsWithGemini = async (
     subject: string,
