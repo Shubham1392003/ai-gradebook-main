@@ -32,7 +32,7 @@ const AuthPage = () => {
         setIsSignUp(false);
       } else {
         await signIn(email, password);
-        navigate("/");
+        navigate("/dashboard");
       }
     } catch (err: any) {
       toast({

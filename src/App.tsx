@@ -38,7 +38,7 @@ const LoadingScreen = () => (
 const HomeRedirect = () => {
   const { user, role, loading } = useAuth();
   if (loading || (user && !role)) return <LoadingScreen />;
-  if (!user) return <LandingPage />;
+  if (!user) return <Navigate to="/auth" replace />;
   return <Navigate to={role === "teacher" ? "/teacher" : "/student"} replace />;
 };
 
@@ -46,7 +46,8 @@ const AppRoutes = () => (
   <>
     <Navbar />
     <Routes>
-      <Route path="/" element={<HomeRedirect />} />
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/dashboard" element={<HomeRedirect />} />
       <Route path="/auth" element={<AuthPage />} />
       <Route path="/docs" element={<DocsPage />} />
 

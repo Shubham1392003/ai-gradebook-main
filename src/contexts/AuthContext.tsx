@@ -44,13 +44,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const fetchRole = async (userId: string) => {
     setFetchingRole(true);
-    const { data } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .maybeSingle();
-    setRole((data?.role as UserRole) ?? "student");
-    setFetchingRole(false);
+    try {
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .maybeSingle();
+      setRole((data?.role as UserRole) ?? "student");
+    } finally {
+      setFetchingRole(false);
+    }
   };
 
   useEffect(() => {
@@ -63,7 +66,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(session?.user ?? null);
         if (session?.user) {
           setTimeout(() => {
-            if (isMounted) fetchRole(session.user.id);
+            fetchRole(session.user.id);
           }, 0);
         } else {
           setRole(null);
@@ -81,7 +84,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           await fetchRole(session.user.id);
         }
       } finally {
-        if (isMounted) setLoadingAuth(false);
+        setLoadingAuth(false);
       }
     };
 
