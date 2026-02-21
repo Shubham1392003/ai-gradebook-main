@@ -10,6 +10,7 @@ import ActivityLog from "@/components/exam/ActivityLog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -303,7 +304,7 @@ const ExamTakingPage = () => {
               >
                 <div className="mb-1 flex items-center justify-between">
                   <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                    Question {currentQ + 1} of {questions.length}
+                    Question {currentQ + 1} of {questions.length} ({q.question_type === 'true_false' ? 'msq' : q.question_type === 'long_answer' ? 'theory' : q.question_type})
                   </span>
                   <span className="text-xs font-medium text-primary">{q.marks} marks</span>
                 </div>
@@ -334,26 +335,34 @@ const ExamTakingPage = () => {
                         </div>
                       ))}
                     </RadioGroup>
-                  ) : q.question_type === "true_false" ? (
-                    <RadioGroup
-                      value={answers[q.id] || ""}
-                      onValueChange={(val) => setAnswers((prev) => ({ ...prev, [q.id]: val }))}
-                      className="space-y-3"
-                    >
-                      {["True", "False"].map((opt) => (
-                        <div
-                          key={opt}
-                          className={`flex items-center gap-3 rounded-xl border p-4 transition-colors cursor-pointer ${
-                            answers[q.id] === opt
-                              ? "border-charcoal bg-charcoal/5"
-                              : "border-border hover:border-primary/30"
-                          }`}
-                        >
-                          <RadioGroupItem value={opt} id={`tf-${opt}`} />
-                          <Label htmlFor={`tf-${opt}`} className="flex-1 cursor-pointer text-sm">{opt}</Label>
-                        </div>
-                      ))}
-                    </RadioGroup>
+                  ) : q.question_type === "true_false" && q.options ? (
+                    <div className="space-y-3">
+                      {(Array.isArray(q.options) ? q.options : []).map((opt: string, oi: number) => {
+                        let selectedOpts: string[] = [];
+                        try {
+                          selectedOpts = answers[q.id] ? JSON.parse(answers[q.id]) : [];
+                        } catch {
+                          selectedOpts = [];
+                        }
+                        const isChecked = selectedOpts.includes(opt);
+
+                        return (
+                          <div
+                            key={oi}
+                            className={`flex items-center gap-3 rounded-xl border p-4 transition-colors cursor-pointer ${
+                              isChecked ? "border-charcoal bg-charcoal/5" : "border-border hover:border-primary/30"
+                            }`}
+                            onClick={() => {
+                              const newOpts = isChecked ? selectedOpts.filter(o => o !== opt) : [...selectedOpts, opt];
+                              setAnswers(prev => ({ ...prev, [q.id]: JSON.stringify(newOpts) }));
+                            }}
+                          >
+                            <Checkbox checked={isChecked} id={`msq-${oi}`} />
+                            <Label htmlFor={`msq-${oi}`} className="flex-1 cursor-pointer text-sm">{opt}</Label>
+                          </div>
+                        );
+                      })}
+                    </div>
                   ) : (
                     <Textarea
                       value={answers[q.id] || ""}

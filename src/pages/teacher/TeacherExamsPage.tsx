@@ -11,9 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger
-} from "@/components/ui/dialog";
+
 import { useToast } from "@/hooks/use-toast";
 import {
   Plus, FileText, Clock, Users, Play, Pause, CheckCircle2, Brain,
@@ -50,12 +48,6 @@ const TeacherExamsPage = () => {
   const { toast } = useToast();
   const [exams, setExams] = useState<ExamRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [createOpen, setCreateOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    title: "", subject: "", class_name: "", duration_minutes: 60,
-    total_marks: 100, warning_limit: 3, description: "",
-  });
-  const [creating, setCreating] = useState(false);
 
   const loadExams = async () => {
     if (!user) return;
@@ -70,24 +62,7 @@ const TeacherExamsPage = () => {
 
   useEffect(() => { loadExams(); }, [user]);
 
-  const handleCreate = async () => {
-    if (!user) return;
-    setCreating(true);
-    const { error } = await supabase.from("exams").insert({
-      ...formData,
-      teacher_id: user.id,
-      status: "draft",
-    });
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Exam Created", description: "You can now add questions." });
-      setCreateOpen(false);
-      setFormData({ title: "", subject: "", class_name: "", duration_minutes: 60, total_marks: 100, warning_limit: 3, description: "" });
-      loadExams();
-    }
-    setCreating(false);
-  };
+
 
   const updateStatus = async (examId: string, newStatus: string) => {
     await supabase.from("exams").update({ status: newStatus }).eq("id", examId);
@@ -110,55 +85,11 @@ const TeacherExamsPage = () => {
           <h1 className="text-2xl font-bold text-foreground">Exam Management</h1>
           <p className="mt-1 text-muted-foreground">Create, schedule, and manage exams.</p>
         </div>
-        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-1.5 bg-charcoal text-charcoal-foreground hover:bg-charcoal/90">
-              <Plus className="h-4 w-4" /> Create Exam
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Create New Exam</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 mt-4">
-              <div>
-                <Label>Title</Label>
-                <Input value={formData.title} onChange={(e) => setFormData((p) => ({ ...p, title: e.target.value }))} placeholder="Midterm Exam" />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label>Subject</Label>
-                  <Input value={formData.subject} onChange={(e) => setFormData((p) => ({ ...p, subject: e.target.value }))} placeholder="Mathematics" />
-                </div>
-                <div>
-                  <Label>Class</Label>
-                  <Input value={formData.class_name} onChange={(e) => setFormData((p) => ({ ...p, class_name: e.target.value }))} placeholder="Class 10-A" />
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <Label>Duration (min)</Label>
-                  <Input type="number" value={formData.duration_minutes} onChange={(e) => setFormData((p) => ({ ...p, duration_minutes: +e.target.value }))} />
-                </div>
-                <div>
-                  <Label>Total Marks</Label>
-                  <Input type="number" value={formData.total_marks} onChange={(e) => setFormData((p) => ({ ...p, total_marks: +e.target.value }))} />
-                </div>
-                <div>
-                  <Label>Warning Limit</Label>
-                  <Input type="number" value={formData.warning_limit} onChange={(e) => setFormData((p) => ({ ...p, warning_limit: +e.target.value }))} />
-                </div>
-              </div>
-              <div>
-                <Label>Description (optional)</Label>
-                <Textarea value={formData.description} onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))} rows={3} />
-              </div>
-              <Button onClick={handleCreate} disabled={creating || !formData.title || !formData.subject || !formData.class_name} className="w-full bg-charcoal text-charcoal-foreground hover:bg-charcoal/90">
-                {creating ? "Creating..." : "Create Exam"}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <Link to="/teacher/generate">
+          <Button className="gap-1.5 bg-charcoal text-charcoal-foreground hover:bg-charcoal/90">
+            <Plus className="h-4 w-4" /> Create Exam
+          </Button>
+        </Link>
       </motion.div>
 
       <div className="mt-8 space-y-4">

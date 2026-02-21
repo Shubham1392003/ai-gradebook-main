@@ -13,6 +13,7 @@ import TeacherDashboard from "@/pages/teacher/TeacherDashboard";
 import TeacherExamsPage from "@/pages/teacher/TeacherExamsPage";
 import TeacherSubmissionsPage from "@/pages/teacher/TeacherSubmissionsPage";
 import TeacherEvidencePage from "@/pages/teacher/TeacherEvidencePage";
+import TeacherEvaluatePage from "@/pages/teacher/TeacherEvaluatePage";
 import AIQuestionGeneratorPage from "@/pages/teacher/AIQuestionGeneratorPage";
 import StudentDashboard from "@/pages/student/StudentDashboard";
 import StudentExamsPage from "@/pages/student/StudentExamsPage";
@@ -56,6 +57,7 @@ const AppRoutes = () => (
       <Route path="/teacher/exams" element={<ProtectedRoute allowedRole="teacher"><TeacherExamsPage /></ProtectedRoute>} />
       <Route path="/teacher/exam/:examId/submissions" element={<ProtectedRoute allowedRole="teacher"><TeacherSubmissionsPage /></ProtectedRoute>} />
       <Route path="/teacher/evidence/:submissionId" element={<ProtectedRoute allowedRole="teacher"><TeacherEvidencePage /></ProtectedRoute>} />
+      <Route path="/teacher/evaluate/:submissionId" element={<ProtectedRoute allowedRole="teacher"><TeacherEvaluatePage /></ProtectedRoute>} />
       <Route path="/teacher/generate" element={<ProtectedRoute allowedRole="teacher"><AIQuestionGeneratorPage /></ProtectedRoute>} />
       <Route path="/teacher/grievances" element={<ProtectedRoute allowedRole="teacher"><TeacherGrievances /></ProtectedRoute>} />
       <Route path="/teacher/analytics" element={<ProtectedRoute allowedRole="teacher"><TeacherAnalytics /></ProtectedRoute>} />

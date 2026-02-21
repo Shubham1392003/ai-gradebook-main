@@ -12,6 +12,10 @@ import {
   Settings, Sparkles, FileText, CheckCircle2, Loader2,
   BookOpen, Zap, ArrowRight, PlusCircle, Trash2
 } from "lucide-react";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
+} from "@/components/ui/select";
+import { generateQuestionsWithGemini } from "@/lib/gemini";
 
 type GeneratedQuestion = {
   question_text: string;
@@ -21,12 +25,13 @@ type GeneratedQuestion = {
   marks: number;
 };
 
-const gradeOptions = ["Class 8", "Class 10", "Class 12", "Undergraduate", "Postgraduate"];
+const gradeOptions = Array.from({ length: 12 }, (_, i) => `Class ${i + 1}`).concat(["Undergraduate", "Postgraduate"]);
 const typeOptions = [
   { value: "mcq", label: "MCQ" },
-  { value: "true_false", label: "True/False" },
-  { value: "short_answer", label: "Short Answer" },
-  { value: "long_answer", label: "Long Answer" },
+  { value: "msq", label: "MSQ (Multiple Select)" },
+  { value: "theory", label: "Theory Question" },
+  { value: "nat", label: "NAT (Numerical)" },
+  { value: "tf", label: "True / False" },
 ];
 
 const AIQuestionGeneratorPage = () => {
@@ -55,13 +60,12 @@ const AIQuestionGeneratorPage = () => {
     }
     setGenerating(true);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-questions", {
-        body: { subject, topic, gradeLevel, questionType, count },
-      });
-      if (error) throw error;
-      setQuestions(data.questions || []);
-      if (data.questions?.length) {
-        toast({ title: "Questions Generated!", description: `${data.questions.length} questions ready for review.` });
+      const generatedQuestions = await generateQuestionsWithGemini(
+        subject, topic, gradeLevel, questionType, count
+      );
+      setQuestions(generatedQuestions || []);
+      if (generatedQuestions?.length) {
+        toast({ title: "Questions Generated!", description: `${generatedQuestions.length} questions ready for review.` });
       }
     } catch (err: any) {
       toast({ title: "Generation failed", description: err.message, variant: "destructive" });
@@ -88,15 +92,23 @@ const AIQuestionGeneratorPage = () => {
       }).select().single();
       if (examErr) throw examErr;
 
-      const qInserts = questions.map((q, i) => ({
-        exam_id: exam.id,
-        question_text: q.question_text,
-        question_type: q.question_type,
-        options: q.options || null,
-        correct_answer: q.correct_answer,
-        marks: q.marks,
-        order_index: i,
-      }));
+      const qInserts = questions.map((q, i) => {
+        let dbType = q.question_type;
+        if (dbType === "msq") dbType = "true_false";
+        if (dbType === "theory") dbType = "long_answer";
+        if (dbType === "tf") dbType = "mcq";
+        if (dbType === "nat") dbType = "short_answer";
+
+        return {
+          exam_id: exam.id,
+          question_text: q.question_text,
+          question_type: dbType,
+          options: q.options || null,
+          correct_answer: q.correct_answer,
+          marks: q.marks,
+          order_index: i,
+        };
+      });
       const { error: qErr } = await supabase.from("questions").insert(qInserts);
       if (qErr) throw qErr;
 
@@ -111,6 +123,23 @@ const AIQuestionGeneratorPage = () => {
 
   const removeQuestion = (idx: number) => {
     setQuestions((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const addManualQuestion = () => {
+    setQuestions((prev) => [
+      ...prev,
+      {
+        question_text: "New Question...",
+        question_type: questionType,
+        options: questionType === "mcq" || questionType === "msq" ? ["A", "B", "C", "D"] : undefined,
+        correct_answer: "A",
+        marks: 2,
+      },
+    ]);
+  };
+
+  const updateQuestion = (idx: number, field: keyof GeneratedQuestion, value: any) => {
+    setQuestions(prev => prev.map((q, i) => i === idx ? { ...q, [field]: value } : q));
   };
 
   return (
@@ -142,20 +171,17 @@ const AIQuestionGeneratorPage = () => {
             <div className="space-y-4">
               <div>
                 <Label className="text-xs text-muted-foreground">Grade Level</Label>
-                <div className="mt-1.5 flex flex-wrap gap-1.5">
-                  {gradeOptions.map((g) => (
-                    <button
-                      key={g}
-                      onClick={() => setGradeLevel(g)}
-                      className={`rounded-xl px-3 py-1.5 text-xs font-medium transition-all ${
-                        gradeLevel === g
-                          ? "bg-charcoal text-charcoal-foreground shadow-sm"
-                          : "bg-muted text-muted-foreground hover:bg-muted/80"
-                      }`}
-                    >
-                      {g}
-                    </button>
-                  ))}
+                <div className="mt-1.5 flex flex-col gap-1.5">
+                  <Select value={gradeLevel} onValueChange={setGradeLevel}>
+                    <SelectTrigger className="w-full rounded-xl bg-card">
+                      <SelectValue placeholder="Select Grade Level" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {gradeOptions.map((g) => (
+                        <SelectItem key={g} value={g}>{g}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
@@ -201,18 +227,15 @@ const AIQuestionGeneratorPage = () => {
               </div>
 
               <div>
-                <Label className="text-xs text-muted-foreground">Number of Questions: {count}</Label>
-                <input
-                  type="range"
+                <Label className="text-xs text-muted-foreground">Number of Questions Tracker</Label>
+                <Input
+                  type="number"
                   min={1}
-                  max={20}
+                  max={100}
                   value={count}
                   onChange={(e) => setCount(Number(e.target.value))}
-                  className="mt-1.5 w-full accent-charcoal"
+                  className="mt-1.5 rounded-xl w-full"
                 />
-                <div className="flex justify-between text-[10px] text-muted-foreground">
-                  <span>1</span><span>5</span><span>10</span><span>15</span><span>20</span>
-                </div>
               </div>
 
               <Button
@@ -231,8 +254,7 @@ const AIQuestionGeneratorPage = () => {
           </div>
 
           {/* Save as Exam panel */}
-          {questions.length > 0 && (
-            <motion.div
+          <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               className="rounded-2xl border border-border bg-card p-5"
@@ -256,15 +278,19 @@ const AIQuestionGeneratorPage = () => {
                 </div>
                 <Button
                   onClick={handleSaveAsExam}
-                  disabled={saving}
+                  disabled={saving || questions.length === 0}
                   className="w-full rounded-xl h-11 gap-2"
                 >
                   {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
                   {saving ? "Saving..." : "Save & Create Exam"}
                 </Button>
+                {questions.length === 0 && (
+                  <p className="text-[10px] text-muted-foreground text-center">
+                    You must generate questions before you can save an exam.
+                  </p>
+                )}
               </div>
             </motion.div>
-          )}
         </motion.div>
 
         {/* Generated Questions Preview */}
@@ -279,11 +305,22 @@ const AIQuestionGeneratorPage = () => {
                 <BookOpen className="h-4 w-4 text-muted-foreground" />
                 <h3 className="font-semibold text-foreground">Generated Questions</h3>
               </div>
-              {questions.length > 0 && (
-                <span className="text-xs font-medium text-primary bg-primary/10 px-2.5 py-1 rounded-lg">
-                  {questions.length} questions
-                </span>
-              )}
+              <div className="flex items-center gap-3">
+                <Button 
+                   onClick={addManualQuestion} 
+                   variant="outline" 
+                   size="sm" 
+                   className="gap-1.5 h-8 text-xs"
+                >
+                   <PlusCircle className="h-3.5 w-3.5" />
+                   Add Question
+                </Button>
+                {questions.length > 0 && (
+                  <span className="text-xs font-medium text-primary bg-primary/10 px-2.5 py-1 rounded-lg">
+                    {questions.length} questions
+                  </span>
+                )}
+              </div>
             </div>
 
             <AnimatePresence mode="wait">
@@ -347,31 +384,37 @@ const AIQuestionGeneratorPage = () => {
                               {q.question_type} • {q.marks} marks
                             </span>
                           </div>
-                          <p className="text-sm font-medium text-foreground mt-2">{q.question_text}</p>
+                          <Textarea 
+                             value={q.question_text}
+                             onChange={(e) => updateQuestion(i, "question_text", e.target.value)}
+                             className="mt-2 min-h-[60px] text-sm font-medium" 
+                          />
                           {q.options && (
-                            <div className="mt-2 flex flex-wrap gap-1.5">
+                            <div className="mt-3 flex flex-col gap-2">
                               {q.options.map((opt, oi) => (
-                                <span
-                                  key={oi}
-                                  className={`text-xs px-2.5 py-1 rounded-lg ${
-                                    q.correct_answer === opt
-                                      ? "bg-success/10 text-success border border-success/20"
-                                      : "bg-muted text-muted-foreground"
-                                  }`}
-                                >
-                                  {opt}
-                                </span>
+                                <div key={oi} className="flex items-center gap-2">
+                                  <div className={`h-2 w-2 rounded-full ${q.correct_answer?.includes(opt) ? 'bg-success' : 'bg-muted'}`} />
+                                  <Input 
+                                    value={opt} 
+                                    onChange={(e) => {
+                                      const newOpts = [...q.options!];
+                                      newOpts[oi] = e.target.value;
+                                      updateQuestion(i, "options", newOpts);
+                                    }}
+                                    className="h-8 text-xs flex-1"
+                                  />
+                                </div>
                               ))}
                             </div>
                           )}
-                          {q.correct_answer && !q.options && (
-                            <div className="mt-2">
-                              <span className="text-xs text-success flex items-center gap-1">
-                                <CheckCircle2 className="h-3 w-3" />
-                                {q.correct_answer}
-                              </span>
-                            </div>
-                          )}
+                          <div className="mt-3">
+                            <Label className="text-[10px] text-muted-foreground uppercase">Correct Answer (or Model Answer)</Label>
+                            <Input 
+                               value={q.correct_answer}
+                               onChange={(e) => updateQuestion(i, "correct_answer", e.target.value)}
+                               className="mt-1 h-8 text-xs border-success/30 focus-visible:ring-success"
+                            />
+                          </div>
                         </div>
                         <button
                           onClick={() => removeQuestion(i)}

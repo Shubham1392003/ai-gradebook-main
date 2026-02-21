@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  ArrowLeft, User, AlertTriangle, Shield, Eye, Clock, CheckCircle2, XCircle
+  ArrowLeft, User, AlertTriangle, Shield, Eye, Clock, CheckCircle2, XCircle, BrainCircuit
 } from "lucide-react";
 
 type SubmissionRow = {
@@ -118,6 +118,11 @@ const TeacherSubmissionsPage = () => {
                     <Link to={`/teacher/evidence/${sub.id}`}>
                       <Button size="sm" variant="outline" className="gap-1.5 text-xs">
                         <Eye className="h-3 w-3" /> View Evidence
+                      </Button>
+                    </Link>
+                    <Link to={`/teacher/evaluate/${sub.id}`}>
+                      <Button size="sm" className="gap-1.5 text-xs bg-charcoal text-white hover:bg-charcoal/90">
+                         <BrainCircuit className="h-3 w-3" /> Evaluate
                       </Button>
                     </Link>
                   </div>
