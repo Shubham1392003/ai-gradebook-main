@@ -1,0 +1,295 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 10% 96%;
+    --foreground: 213 30% 10%;
+
+    --card: 210 10% 98%;
+    --card-foreground: 213 30% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 213 30% 10%;
+
+    --primary: 205 18% 41%;
+    --primary-foreground: 210 10% 96%;
+
+    --secondary: 208 13% 72%;
+    --secondary-foreground: 213 30% 10%;
+
+    --muted: 210 10% 90%;
+    --muted-foreground: 205 12% 50%;
+
+    --accent: 208 13% 72%;
+    --accent-foreground: 213 30% 10%;
+
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 210 12% 82%;
+    --input: 210 12% 85%;
+    --ring: 205 18% 41%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 213 30% 10%;
+    --sidebar-foreground: 210 10% 90%;
+    --sidebar-primary: 205 18% 41%;
+    --sidebar-primary-foreground: 210 10% 96%;
+    --sidebar-accent: 205 18% 20%;
+    --sidebar-accent-foreground: 210 10% 90%;
+    --sidebar-border: 205 15% 25%;
+    --sidebar-ring: 205 18% 41%;
+
+    /* Custom tokens */
+    --charcoal: 213 30% 10%;
+    --charcoal-foreground: 210 10% 96%;
+    --slate: 205 18% 41%;
+    --slate-foreground: 210 10% 96%;
+    --blue-gray: 208 13% 72%;
+    --light-gray: 210 10% 82%;
+    --glass: 210 10% 98% / 0.7;
+    --glass-border: 210 12% 85% / 0.5;
+    --success: 152 60% 40%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    /* Hero section dark */
+    --hero-bg: 213 30% 7%;
+    --hero-fg: 210 10% 92%;
+    --hero-muted: 208 12% 55%;
+    --hero-glow: 205 40% 50%;
+  }
+
+  .dark {
+    --background: 213 30% 7%;
+    --foreground: 210 10% 90%;
+    --card: 213 28% 12%;
+    --card-foreground: 210 10% 90%;
+    --popover: 213 28% 12%;
+    --popover-foreground: 210 10% 90%;
+    --primary: 208 13% 72%;
+    --primary-foreground: 213 30% 10%;
+    --secondary: 205 18% 25%;
+    --secondary-foreground: 210 10% 90%;
+    --muted: 205 15% 20%;
+    --muted-foreground: 208 10% 60%;
+    --accent: 205 18% 25%;
+    --accent-foreground: 210 10% 90%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 205 15% 22%;
+    --input: 205 15% 22%;
+    --ring: 208 13% 72%;
+    --sidebar-background: 213 30% 5%;
+    --sidebar-foreground: 210 10% 90%;
+    --sidebar-primary: 208 13% 72%;
+    --sidebar-primary-foreground: 213 30% 10%;
+    --sidebar-accent: 205 18% 15%;
+    --sidebar-accent-foreground: 210 10% 90%;
+    --sidebar-border: 205 15% 18%;
+    --sidebar-ring: 208 13% 72%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-white/70 backdrop-blur-xl border border-white/20 shadow-lg;
+  }
+
+  .glass-card {
+    @apply bg-white/60 backdrop-blur-lg border border-white/30 shadow-md rounded-xl;
+  }
+
+  .glass-dark {
+    @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg;
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-gray to-secondary;
+  }
+
+  .text-gradient-hero {
+    background: linear-gradient(135deg, hsl(208 13% 72%), hsl(205 18% 55%), hsl(208 13% 72%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hover-scale {
+    @apply transition-transform duration-200 hover:scale-105;
+  }
+
+  .story-link * {
+    @apply relative inline-block after:content-[''] after:absolute after:w-full after:scale-x-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-primary after:origin-bottom-right after:transition-transform after:duration-300 hover:after:scale-x-100 hover:after:origin-bottom-left;
+  }
+}
+
+/* Grid pattern background */
+.grid-pattern {
+  background-image:
+    linear-gradient(hsl(210 12% 82% / 0.3) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(210 12% 82% / 0.3) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+/* Radial glow */
+.hero-glow {
+  background: radial-gradient(ellipse 60% 50% at 50% 30%, hsl(205 40% 50% / 0.15), transparent);
+}
+
+.hero-glow-intense {
+  background: radial-gradient(ellipse 50% 40% at 50% 20%, hsl(205 40% 50% / 0.25), transparent);
+}
+
+/* Sparkle animation */
+@keyframes sparkle {
+
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0) rotate(0deg);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1) rotate(180deg);
+  }
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+@keyframes float-slow {
+
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+
+  50% {
+    transform: translateY(-18px) rotate(5deg);
+  }
+}
+
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 20px hsl(205 40% 50% / 0.1);
+  }
+
+  50% {
+    box-shadow: 0 0 40px hsl(205 40% 50% / 0.25);
+  }
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes counter {
+  from {
+    --num: 0;
+  }
+
+  to {
+    --num: var(--target);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: float-slow 8s ease-in-out infinite;
+}
+
+.animate-float-delay {
+  animation: float 6s ease-in-out 2s infinite;
+}
+
+.animate-sparkle {
+  animation: sparkle 3s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+.animate-marquee {
+  animation: marquee 30s linear infinite;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.2s ease-out;
+}
