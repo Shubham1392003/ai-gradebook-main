@@ -253,9 +253,8 @@ const ExamTakingPage = () => {
             <p className="text-xs text-muted-foreground">{exam?.subject} • {questions.length} questions</p>
           </div>
           <div className="flex items-center gap-4">
-            <div className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-mono text-sm font-bold ${
-              timeLeft < 300 ? "bg-destructive/10 text-destructive" : "bg-muted text-foreground"
-            }`}>
+            <div className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-mono text-sm font-bold ${timeLeft < 300 ? "bg-destructive/10 text-destructive" : "bg-muted text-foreground"
+              }`}>
               <Clock className="h-4 w-4" />
               {formatTime(timeLeft)}
             </div>
@@ -281,13 +280,12 @@ const ExamTakingPage = () => {
                 <button
                   key={i}
                   onClick={() => setCurrentQ(i)}
-                  className={`flex h-8 w-8 items-center justify-center rounded-lg text-xs font-medium transition-all ${
-                    i === currentQ
+                  className={`flex h-8 w-8 items-center justify-center rounded-lg text-xs font-medium transition-all ${i === currentQ
                       ? "bg-charcoal text-charcoal-foreground shadow-md"
                       : answers[questions[i]?.id]
-                      ? "bg-success/10 text-success border border-success/20"
-                      : "bg-muted text-muted-foreground hover:bg-muted/80"
-                  }`}
+                        ? "bg-success/10 text-success border border-success/20"
+                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    }`}
                 >
                   {i + 1}
                 </button>
@@ -322,11 +320,10 @@ const ExamTakingPage = () => {
                       {(Array.isArray(q.options) ? q.options : []).map((opt: string, oi: number) => (
                         <div
                           key={oi}
-                          className={`flex items-center gap-3 rounded-xl border p-4 transition-colors cursor-pointer ${
-                            answers[q.id] === opt
+                          className={`flex items-center gap-3 rounded-xl border p-4 transition-colors cursor-pointer ${answers[q.id] === opt
                               ? "border-charcoal bg-charcoal/5"
                               : "border-border hover:border-primary/30"
-                          }`}
+                            }`}
                         >
                           <RadioGroupItem value={opt} id={`opt-${oi}`} />
                           <Label htmlFor={`opt-${oi}`} className="flex-1 cursor-pointer text-sm">
@@ -349,9 +346,8 @@ const ExamTakingPage = () => {
                         return (
                           <div
                             key={oi}
-                            className={`flex items-center gap-3 rounded-xl border p-4 transition-colors cursor-pointer ${
-                              isChecked ? "border-charcoal bg-charcoal/5" : "border-border hover:border-primary/30"
-                            }`}
+                            className={`flex items-center gap-3 rounded-xl border p-4 transition-colors cursor-pointer ${isChecked ? "border-charcoal bg-charcoal/5" : "border-border hover:border-primary/30"
+                              }`}
                             onClick={() => {
                               const newOpts = isChecked ? selectedOpts.filter(o => o !== opt) : [...selectedOpts, opt];
                               setAnswers(prev => ({ ...prev, [q.id]: JSON.stringify(newOpts) }));
@@ -406,6 +402,7 @@ const ExamTakingPage = () => {
               submissionId={submissionId}
               studentId={user?.id || ""}
               enabled={!isTerminated && !isSubmitted}
+              onWarning={(desc) => logEvent({ event_type: "multiple_faces", description: desc }, true)}
             />
             <ActivityLog
               events={events}

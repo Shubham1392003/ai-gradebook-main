@@ -109,14 +109,14 @@ export const useAntiCheat = ({
 
     inactivityTimerRef.current = setInterval(() => {
       const elapsed = Date.now() - lastActivityRef.current;
-      if (elapsed > 30000) {
+      if (elapsed > 5000) {
         logEvent({
           event_type: "inactivity",
           description: `No activity detected for ${Math.round(elapsed / 1000)} seconds`,
         });
         lastActivityRef.current = Date.now(); // Reset to avoid spam
       }
-    }, 10000);
+    }, 1000);
 
     return () => {
       events.forEach((e) => window.removeEventListener(e, resetActivity));
@@ -124,24 +124,35 @@ export const useAntiCheat = ({
     };
   }, [enabled, logEvent]);
 
-  // Keyboard shortcuts (copy/paste/print)
+  // Keyboard shortcuts and Clipboard (copy/paste/print)
   useEffect(() => {
     if (!enabled) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (
         (e.ctrlKey || e.metaKey) &&
-        ["c", "v", "p", "a"].includes(e.key.toLowerCase())
+        ["c", "v", "x", "p", "a"].includes(e.key.toLowerCase())
       ) {
         e.preventDefault();
         logEvent(
           {
-            event_type: "other",
+            event_type: "copy_paste",
             description: `Blocked keyboard shortcut: ${e.ctrlKey ? "Ctrl" : "Cmd"}+${e.key.toUpperCase()}`,
           },
-          false // Don't count as warning
+          true // Strict warning!
         );
       }
+    };
+
+    const handleClipboard = (e: Event) => {
+      e.preventDefault();
+      logEvent(
+        {
+          event_type: "copy_paste",
+          description: `Unauthorized clipboard action: ${e.type}`,
+        },
+        true // Strict warning for clipboard operations
+      );
     };
 
     // Disable right-click
@@ -152,15 +163,22 @@ export const useAntiCheat = ({
           event_type: "other",
           description: "Right-click context menu blocked",
         },
-        false
+        true // Count this as a warning as well!
       );
     };
 
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("contextmenu", handleContextMenu);
+    window.addEventListener("copy", handleClipboard);
+    window.addEventListener("paste", handleClipboard);
+    window.addEventListener("cut", handleClipboard);
+
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("contextmenu", handleContextMenu);
+      window.removeEventListener("copy", handleClipboard);
+      window.removeEventListener("paste", handleClipboard);
+      window.removeEventListener("cut", handleClipboard);
     };
   }, [enabled, logEvent]);
 

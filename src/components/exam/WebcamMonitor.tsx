@@ -7,6 +7,7 @@ interface WebcamMonitorProps {
   studentId: string;
   enabled: boolean;
   onFaceAbsent?: () => void;
+  onWarning?: (desc: string) => void;
   captureInterval?: number; // ms between screenshots
 }
 
@@ -15,7 +16,8 @@ const WebcamMonitor = ({
   studentId,
   enabled,
   onFaceAbsent,
-  captureInterval = 30000, // 30s
+  onWarning,
+  captureInterval = 10000, // 10s
 }: WebcamMonitorProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -23,6 +25,7 @@ const WebcamMonitor = ({
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [isActive, setIsActive] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval>>();
+  const faceIntervalRef = useRef<ReturnType<typeof setInterval>>();
 
   const startCamera = useCallback(async () => {
     try {
@@ -96,11 +99,29 @@ const WebcamMonitor = ({
     intervalRef.current = setInterval(captureScreenshot, captureInterval);
     // Capture first screenshot after 5 seconds
     const initTimeout = setTimeout(captureScreenshot, 5000);
+
+    // Multi-face detection loop every 2 seconds
+    if ('FaceDetector' in window) {
+      const faceDetector = new (window as any).FaceDetector({ fastMode: true, maxDetectedFaces: 10 });
+      faceIntervalRef.current = setInterval(async () => {
+        if (!videoRef.current || !isActive) return;
+        try {
+          const faces = await faceDetector.detect(videoRef.current);
+          if (faces.length > 1) {
+            onWarning?.(`Multiple faces detected! Count: ${faces.length}`);
+          }
+        } catch (e) {
+          // Unsupported or error
+        }
+      }, 500);
+    }
+
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
+      if (faceIntervalRef.current) clearInterval(faceIntervalRef.current);
       clearTimeout(initTimeout);
     };
-  }, [isActive, enabled, captureScreenshot, captureInterval]);
+  }, [isActive, enabled, captureScreenshot, captureInterval, onWarning]);
 
   return (
     <div className="relative">
