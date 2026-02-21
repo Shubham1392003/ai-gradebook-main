@@ -5,7 +5,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Clock, Play, CheckCircle2, XCircle } from "lucide-react";
+import { FileText, Clock, Play, CheckCircle2, XCircle, ShieldAlert } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
 
 type ExamRow = {
   id: string;
@@ -18,39 +28,64 @@ type ExamRow = {
   scheduled_at: string | null;
 };
 
-type SubmissionRow = {
-  exam_id: string;
+type SubmissionInfo = {
+  id: string;
   status: string;
+  grievanceStatus?: string;
 };
 
 const StudentExamsPage = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [exams, setExams] = useState<ExamRow[]>([]);
-  const [submissions, setSubmissions] = useState<Record<string, string>>({});
+  const [submissions, setSubmissions] = useState<Record<string, SubmissionInfo>>({});
   const [loading, setLoading] = useState(true);
 
+  // Grievance state
+  const [selectedSubmissionId, setSelectedSubmissionId] = useState<string | null>(null);
+  const [grievanceReason, setGrievanceReason] = useState("");
+  const [isSubmittingGrievance, setIsSubmittingGrievance] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const loadData = async () => {
+    if (!user) return;
+    const { data: examData } = await supabase
+      .from("exams")
+      .select("*")
+      .in("status", ["scheduled", "active", "completed"])
+      .order("created_at", { ascending: false });
+
+    setExams((examData || []) as ExamRow[]);
+
+    const { data: subData } = await supabase
+      .from("submissions")
+      .select("id, exam_id, status")
+      .eq("student_id", user.id);
+
+    const { data: grievanceData } = await supabase
+      .from("grievances")
+      .select("submission_id, status")
+      .eq("student_id", user.id);
+
+    const grievanceMap: Record<string, string> = {};
+    (grievanceData || []).forEach((g: any) => {
+      grievanceMap[g.submission_id] = g.status;
+    });
+
+    const subMap: Record<string, SubmissionInfo> = {};
+    (subData || []).forEach((s: any) => {
+      subMap[s.exam_id] = {
+        id: s.id,
+        status: s.status,
+        grievanceStatus: grievanceMap[s.id]
+      };
+    });
+    setSubmissions(subMap);
+    setLoading(false);
+  };
+
   useEffect(() => {
-    const load = async () => {
-      if (!user) return;
-      const { data: examData } = await supabase
-        .from("exams")
-        .select("*")
-        .in("status", ["scheduled", "active", "completed"])
-        .order("created_at", { ascending: false });
-
-      setExams((examData || []) as ExamRow[]);
-
-      const { data: subData } = await supabase
-        .from("submissions")
-        .select("exam_id, status")
-        .eq("student_id", user.id);
-
-      const subMap: Record<string, string> = {};
-      (subData || []).forEach((s: SubmissionRow) => { subMap[s.exam_id] = s.status; });
-      setSubmissions(subMap);
-      setLoading(false);
-    };
-    load();
+    loadData();
   }, [user]);
 
   const statusBadge = (examStatus: string, subStatus?: string) => {
@@ -60,6 +95,56 @@ const StudentExamsPage = () => {
     if (examStatus === "active") return <Badge className="bg-primary/10 text-primary border-primary/20">Active</Badge>;
     if (examStatus === "scheduled") return <Badge className="bg-muted text-muted-foreground">Scheduled</Badge>;
     return <Badge variant="outline">Completed</Badge>;
+  };
+
+  const handleApplyGrievance = async () => {
+    if (!selectedSubmissionId || !grievanceReason.trim() || !user) {
+      toast({
+        title: "Reason required",
+        description: "Please explain your grievance clearly before applying.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSubmittingGrievance(true);
+    try {
+      const { error } = await supabase
+        .from("grievances")
+        .insert({
+          student_id: user.id,
+          submission_id: selectedSubmissionId,
+          reason: grievanceReason,
+          status: "pending"
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Grievance applied",
+        description: "Your grievance has been submitted successfully to the teacher."
+      });
+
+      setIsDialogOpen(false);
+      setGrievanceReason("");
+      setSelectedSubmissionId(null);
+
+      loadData();
+    } catch (error: any) {
+      toast({
+        title: "Failed to apply grievance",
+        description: error.message || "Something went wrong.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmittingGrievance(false);
+    }
+  };
+
+  const openGrievanceDialog = (submissionId: string) => {
+    setSelectedSubmissionId(submissionId);
+    setGrievanceReason("");
+    setIsDialogOpen(true);
   };
 
   if (loading) {
@@ -84,8 +169,11 @@ const StudentExamsPage = () => {
           </div>
         ) : (
           exams.map((exam, i) => {
-            const subStatus = submissions[exam.id];
+            const subInfo = submissions[exam.id];
+            const subStatus = subInfo?.status;
+            const grievanceStatus = subInfo?.grievanceStatus;
             const canTake = exam.status === "active" && (!subStatus || subStatus === "in_progress");
+
             return (
               <motion.div
                 key={exam.id}
@@ -106,18 +194,37 @@ const StudentExamsPage = () => {
                   <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{exam.duration_minutes} min</span>
                   <span>{exam.total_marks} marks</span>
                 </div>
-                <div className="mt-auto pt-4">
+                <div className="mt-auto pt-4 flex items-center justify-between">
                   {canTake ? (
-                    <Link to={`/student/exam/${exam.id}`}>
+                    <Link to={`/student/exam/${exam.id}`} className="w-full">
                       <Button size="sm" className="w-full gap-1.5 bg-charcoal text-charcoal-foreground hover:bg-charcoal/90">
                         <Play className="h-3.5 w-3.5" />
                         {subStatus === "in_progress" ? "Continue Exam" : "Start Exam"}
                       </Button>
                     </Link>
                   ) : subStatus === "submitted" ? (
-                    <div className="flex items-center gap-1.5 text-xs text-success">
-                      <CheckCircle2 className="h-3.5 w-3.5" />
-                      Completed
+                    <div className="w-full flex flex-col gap-2">
+                      <div className="flex items-center gap-1.5 text-xs text-success">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        Completed
+                      </div>
+                      <div className="flex justify-end">
+                        {!grievanceStatus ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => openGrievanceDialog(subInfo.id)}
+                            className="h-8 text-xs px-2 gap-1.5 border-primary/20 text-primary hover:bg-primary/10"
+                          >
+                            <ShieldAlert className="h-3.5 w-3.5" />
+                            Raise Grievance
+                          </Button>
+                        ) : (
+                          <Badge variant="outline" className={`text-xs py-1 ${grievanceStatus === "resolved" ? "border-success/30 text-success" : "border-warning/30 text-warning"}`}>
+                            Grievance {grievanceStatus.charAt(0).toUpperCase() + grievanceStatus.slice(1)}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   ) : subStatus === "terminated" ? (
                     <div className="flex items-center gap-1.5 text-xs text-destructive">
@@ -133,6 +240,34 @@ const StudentExamsPage = () => {
           })
         )}
       </div>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Raise Grievance</DialogTitle>
+            <DialogDescription>
+              Explain the issue with your examination. This will be sent directly to your teacher.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Textarea
+              placeholder="e.g., I faced network issues during submission, or I believe question 4 was evaluated incorrectly."
+              value={grievanceReason}
+              onChange={(e) => setGrievanceReason(e.target.value)}
+              className="resize-none"
+              rows={4}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isSubmittingGrievance}>
+              Cancel
+            </Button>
+            <Button onClick={handleApplyGrievance} disabled={isSubmittingGrievance}>
+              {isSubmittingGrievance ? "Submitting..." : "Submit Grievance"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

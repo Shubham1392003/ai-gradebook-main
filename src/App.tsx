@@ -19,9 +19,11 @@ import StudentDashboard from "@/pages/student/StudentDashboard";
 import StudentExamsPage from "@/pages/student/StudentExamsPage";
 import ExamTakingPage from "@/pages/student/ExamTakingPage";
 import {
-  TeacherGrievances, TeacherAnalytics,
-  StudentGrievances, StudentScorecards, StudentAnalytics,
+  TeacherAnalytics,
+  StudentScorecards, StudentAnalytics,
 } from "@/pages/SubPages";
+import TeacherGrievancesPage from "@/pages/teacher/TeacherGrievancesPage";
+import StudentGrievancesPage from "@/pages/student/StudentGrievancesPage";
 import { Sparkles } from "lucide-react";
 import NotFound from "./pages/NotFound";
 
@@ -59,14 +61,14 @@ const AppRoutes = () => (
       <Route path="/teacher/evidence/:submissionId" element={<ProtectedRoute allowedRole="teacher"><TeacherEvidencePage /></ProtectedRoute>} />
       <Route path="/teacher/evaluate/:submissionId" element={<ProtectedRoute allowedRole="teacher"><TeacherEvaluatePage /></ProtectedRoute>} />
       <Route path="/teacher/generate" element={<ProtectedRoute allowedRole="teacher"><AIQuestionGeneratorPage /></ProtectedRoute>} />
-      <Route path="/teacher/grievances" element={<ProtectedRoute allowedRole="teacher"><TeacherGrievances /></ProtectedRoute>} />
+      <Route path="/teacher/grievances" element={<ProtectedRoute allowedRole="teacher"><TeacherGrievancesPage /></ProtectedRoute>} />
       <Route path="/teacher/analytics" element={<ProtectedRoute allowedRole="teacher"><TeacherAnalytics /></ProtectedRoute>} />
 
       {/* Student routes */}
       <Route path="/student" element={<ProtectedRoute allowedRole="student"><StudentDashboard /></ProtectedRoute>} />
       <Route path="/student/exams" element={<ProtectedRoute allowedRole="student"><StudentExamsPage /></ProtectedRoute>} />
       <Route path="/student/exam/:examId" element={<ProtectedRoute allowedRole="student"><ExamTakingPage /></ProtectedRoute>} />
-      <Route path="/student/grievances" element={<ProtectedRoute allowedRole="student"><StudentGrievances /></ProtectedRoute>} />
+      <Route path="/student/grievances" element={<ProtectedRoute allowedRole="student"><StudentGrievancesPage /></ProtectedRoute>} />
       <Route path="/student/scorecards" element={<ProtectedRoute allowedRole="student"><StudentScorecards /></ProtectedRoute>} />
       <Route path="/student/analytics" element={<ProtectedRoute allowedRole="student"><StudentAnalytics /></ProtectedRoute>} />
 
