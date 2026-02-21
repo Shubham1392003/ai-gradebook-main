@@ -42,15 +42,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const loading = loadingAuth || fetchingRole;
 
-  const fetchRole = async (userId: string) => {
+  const fetchRole = async (userId: string, metadataRole?: string) => {
     setFetchingRole(true);
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", userId)
         .maybeSingle();
-      setRole((data?.role as UserRole) ?? "student");
+      
+      if (error) {
+        console.error("Error fetching user role:", error);
+      }
+      
+      let fetchedRole = data?.role;
+      
+      // Self-healing: If no role in DB, check metadata and gracefully insert it since we now have a session
+      if (!fetchedRole && metadataRole) {
+        fetchedRole = metadataRole as UserRole;
+        try {
+          await supabase.from("user_roles").insert({ user_id: userId, role: metadataRole as "teacher" | "student" });
+        } catch (insertErr) {
+          console.error("Self-healing role insert failed:", insertErr);
+        }
+      }
+      
+      setRole((fetchedRole as UserRole) ?? "student");
     } finally {
       setFetchingRole(false);
     }
@@ -66,7 +83,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(session?.user ?? null);
         if (session?.user) {
           setTimeout(() => {
-            fetchRole(session.user.id);
+            fetchRole(session.user.id, session.user.user_metadata?.role);
           }, 0);
         } else {
           setRole(null);
@@ -81,7 +98,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
-          await fetchRole(session.user.id);
+          await fetchRole(session.user.id, session.user.user_metadata?.role);
         }
       } finally {
         setLoadingAuth(false);
@@ -101,15 +118,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       email,
       password,
       options: {
-        data: { full_name: fullName },
+        data: { full_name: fullName, role },
         emailRedirectTo: window.location.origin,
       },
     });
     if (error) throw error;
-    if (data.user) {
-      await supabase.from("user_roles").insert({ user_id: data.user.id, role });
-      setRole(role);
+    
+    // Only attempt insert if we get a session synchronously (no email confirmation needed)
+    if (data.session && data.user) {
+      const { error: roleError } = await supabase.from("user_roles").insert({ user_id: data.user.id, role });
+      if (roleError) console.error("Role insertion failed:", roleError);
     }
+    
+    setRole(role);
   };
 
   const signIn = async (email: string, password: string) => {
