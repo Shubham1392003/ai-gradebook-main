@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -77,6 +77,8 @@ const ExamTakingPage = () => {
     });
   }, [submissionId, answers, toast]);
 
+  const captureEvidenceRef = useRef<() => Promise<string | null>>();
+
   const { warningCount, events, logEvent } = useAntiCheat({
     submissionId,
     studentId: user?.id || "",
@@ -84,7 +86,16 @@ const ExamTakingPage = () => {
     enabled: !!submissionId && !isTerminated && !isSubmitted,
     onWarning: handleWarning,
     onTerminate: handleTerminate,
+    captureEvidence: async () => captureEvidenceRef.current ? await captureEvidenceRef.current() : null,
   });
+
+  const handleWebcamWarning = useCallback((desc: string, eventType?: string) => {
+    logEvent({ event_type: eventType || "webcam_warning", description: desc }, true);
+  }, [logEvent]);
+
+  const handleCaptureReady = useCallback((fn: () => Promise<string | null>) => {
+    captureEvidenceRef.current = fn;
+  }, []);
 
   // Load exam and create submission
   useEffect(() => {
@@ -429,7 +440,8 @@ const ExamTakingPage = () => {
               submissionId={submissionId}
               studentId={user?.id || ""}
               enabled={!isTerminated && !isSubmitted}
-              onWarning={(desc) => logEvent({ event_type: "multiple_faces", description: desc }, true)}
+              onCaptureReady={handleCaptureReady}
+              onWarning={handleWebcamWarning}
             />
             <ActivityLog
               events={events}

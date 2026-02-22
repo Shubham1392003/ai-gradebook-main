@@ -77,7 +77,7 @@ const TeacherEvidencePage = () => {
       setLogs(allLogs);
 
       // Get screenshot URLs
-      const screenshotLogs = allLogs.filter((l) => l.event_type === "screenshot" && l.evidence_url);
+      const screenshotLogs = allLogs.filter((l) => Boolean(l.evidence_url));
       const urls = await Promise.all(
         screenshotLogs.map(async (l) => {
           const { data } = await supabase.storage.from("evidence").createSignedUrl(l.evidence_url!, 3600);

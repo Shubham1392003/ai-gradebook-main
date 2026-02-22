@@ -14,6 +14,7 @@ interface UseAntiCheatOptions {
   enabled: boolean;
   onWarning: (count: number, event: string) => void;
   onTerminate: () => void;
+  captureEvidence?: () => Promise<string | null>;
 }
 
 export const useAntiCheat = ({
@@ -23,6 +24,7 @@ export const useAntiCheat = ({
   enabled,
   onWarning,
   onTerminate,
+  captureEvidence,
 }: UseAntiCheatOptions) => {
   const [warningCount, setWarningCount] = useState(0);
   const [events, setEvents] = useState<CheatingEvent[]>([]);
@@ -30,9 +32,17 @@ export const useAntiCheat = ({
   const inactivityTimerRef = useRef<ReturnType<typeof setInterval>>();
   const warningCountRef = useRef(0);
 
+  const captureEvidenceRef = useRef(captureEvidence);
+  useEffect(() => { captureEvidenceRef.current = captureEvidence; }, [captureEvidence]);
+
   const logEvent = useCallback(
     async (event: CheatingEvent, isWarning = true) => {
-      setEvents((prev) => [...prev, event]);
+      let finalEvidenceUrl = event.evidence_url || null;
+      if (isWarning && !finalEvidenceUrl && captureEvidenceRef.current) {
+        finalEvidenceUrl = await captureEvidenceRef.current() || null;
+      }
+
+      setEvents((prev) => [...prev, { ...event, evidence_url: finalEvidenceUrl || undefined }]);
 
       // Store in DB
       await supabase.from("cheating_logs").insert({
@@ -40,11 +50,17 @@ export const useAntiCheat = ({
         student_id: studentId,
         event_type: event.event_type,
         description: event.description,
-        evidence_url: event.evidence_url || null,
+        evidence_url: finalEvidenceUrl,
       });
 
       if (isWarning) {
-        const newCount = warningCountRef.current + 1;
+        let newCount = warningCountRef.current + 1;
+
+        // Immediate termination for Tab Switches or Window Blurs
+        if (event.event_type === "tab_switch" || event.event_type === "window_blur") {
+          newCount = warningLimit; // Force limit to trigger termination
+        }
+
         warningCountRef.current = newCount;
         setWarningCount(newCount);
 
@@ -96,33 +112,7 @@ export const useAntiCheat = ({
     return () => window.removeEventListener("blur", handleBlur);
   }, [enabled, logEvent]);
 
-  // Inactivity detection (30 seconds)
-  useEffect(() => {
-    if (!enabled) return;
-
-    const resetActivity = () => {
-      lastActivityRef.current = Date.now();
-    };
-
-    const events = ["mousemove", "keydown", "mousedown", "touchstart", "scroll"];
-    events.forEach((e) => window.addEventListener(e, resetActivity));
-
-    inactivityTimerRef.current = setInterval(() => {
-      const elapsed = Date.now() - lastActivityRef.current;
-      if (elapsed > 5000) {
-        logEvent({
-          event_type: "inactivity",
-          description: `No activity detected for ${Math.round(elapsed / 1000)} seconds`,
-        });
-        lastActivityRef.current = Date.now(); // Reset to avoid spam
-      }
-    }, 1000);
-
-    return () => {
-      events.forEach((e) => window.removeEventListener(e, resetActivity));
-      if (inactivityTimerRef.current) clearInterval(inactivityTimerRef.current);
-    };
-  }, [enabled, logEvent]);
+  // Removed Inactivity detection to allow students to solve paper-based tests securely.
 
   // Keyboard shortcuts and Clipboard (copy/paste/print)
   useEffect(() => {
