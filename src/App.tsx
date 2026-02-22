@@ -18,9 +18,11 @@ import AIQuestionGeneratorPage from "@/pages/teacher/AIQuestionGeneratorPage";
 import StudentDashboard from "@/pages/student/StudentDashboard";
 import StudentExamsPage from "@/pages/student/StudentExamsPage";
 import ExamTakingPage from "@/pages/student/ExamTakingPage";
+import StudentEvaluatedPaperPage from "@/pages/student/StudentEvaluatedPaperPage";
+import StudentScorecardsPage from "@/pages/student/StudentScorecardsPage";
 import {
   TeacherAnalytics,
-  StudentScorecards, StudentAnalytics,
+  StudentAnalytics,
 } from "@/pages/SubPages";
 import TeacherGrievancesPage from "@/pages/teacher/TeacherGrievancesPage";
 import StudentGrievancesPage from "@/pages/student/StudentGrievancesPage";
@@ -68,8 +70,9 @@ const AppRoutes = () => (
       <Route path="/student" element={<ProtectedRoute allowedRole="student"><StudentDashboard /></ProtectedRoute>} />
       <Route path="/student/exams" element={<ProtectedRoute allowedRole="student"><StudentExamsPage /></ProtectedRoute>} />
       <Route path="/student/exam/:examId" element={<ProtectedRoute allowedRole="student"><ExamTakingPage /></ProtectedRoute>} />
+      <Route path="/student/exam/:examId/results" element={<ProtectedRoute allowedRole="student"><StudentEvaluatedPaperPage /></ProtectedRoute>} />
       <Route path="/student/grievances" element={<ProtectedRoute allowedRole="student"><StudentGrievancesPage /></ProtectedRoute>} />
-      <Route path="/student/scorecards" element={<ProtectedRoute allowedRole="student"><StudentScorecards /></ProtectedRoute>} />
+      <Route path="/student/scorecards" element={<ProtectedRoute allowedRole="student"><StudentScorecardsPage /></ProtectedRoute>} />
       <Route path="/student/analytics" element={<ProtectedRoute allowedRole="student"><StudentAnalytics /></ProtectedRoute>} />
 
       <Route path="*" element={<NotFound />} />

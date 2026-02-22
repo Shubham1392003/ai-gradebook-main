@@ -35,9 +35,6 @@ export const StudentExams = () => (
 export const StudentGrievances = () => (
   <PlaceholderPage title="My Grievances" description="File and track grievance status for evaluations." />
 );
-export const StudentScorecards = () => (
-  <PlaceholderPage title="Scorecards" description="View and download SGPA/CGPA scorecards." />
-);
 export const StudentAnalytics = () => (
   <PlaceholderPage title="Performance Analytics" description="Track your growth, strengths, and areas for improvement." />
 );

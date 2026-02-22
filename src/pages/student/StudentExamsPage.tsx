@@ -38,6 +38,7 @@ type SubmissionInfo = {
   id: string;
   status: string;
   grievanceStatus?: string;
+  hasScorecard: boolean;
 };
 
 const StudentExamsPage = () => {
@@ -93,12 +94,23 @@ const StudentExamsPage = () => {
       grievanceMap[g.submission_id] = g.status;
     });
 
+    const { data: scorecardData } = await supabase
+      .from("scorecards")
+      .select("exam_id")
+      .eq("student_id", user.id);
+      
+    const scorecardMap: Record<string, boolean> = {};
+    (scorecardData || []).forEach((sc: any) => {
+      scorecardMap[sc.exam_id] = true;
+    });
+
     const subMap: Record<string, SubmissionInfo> = {};
     (subData || []).forEach((s: any) => {
       subMap[s.exam_id] = {
         id: s.id,
         status: s.status,
-        grievanceStatus: grievanceMap[s.id]
+        grievanceStatus: grievanceMap[s.id],
+        hasScorecard: scorecardMap[s.exam_id] || false
       };
     });
     setSubmissions(subMap);
@@ -268,27 +280,47 @@ const StudentExamsPage = () => {
                     </Link>
                   ) : subStatus === "submitted" ? (
                     <div className="w-full flex flex-col gap-2">
-                      <div className="flex items-center gap-1.5 text-xs text-success">
-                        <CheckCircle2 className="h-3.5 w-3.5" />
-                        Completed
-                      </div>
-                      <div className="flex justify-end">
-                        {!grievanceStatus ? (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => openGrievanceDialog(subInfo.id)}
-                            className="h-8 text-xs px-2 gap-1.5 border-primary/20 text-primary hover:bg-primary/10"
-                          >
-                            <ShieldAlert className="h-3.5 w-3.5" />
-                            Raise Grievance
-                          </Button>
-                        ) : (
-                          <Badge variant="outline" className={`text-xs py-1 ${grievanceStatus === "resolved" ? "border-success/30 text-success" : "border-warning/30 text-warning"}`}>
-                            Grievance {grievanceStatus.charAt(0).toUpperCase() + grievanceStatus.slice(1)}
-                          </Badge>
-                        )}
-                      </div>
+                       <div className="flex items-center justify-between text-xs font-semibold">
+                          <span className="flex items-center gap-1.5 text-success">
+                             <CheckCircle2 className="h-3.5 w-3.5" />
+                             Completed
+                          </span>
+                          {subInfo.hasScorecard ? (
+                             <Badge className="bg-success text-success-foreground border-success text-[10px] py-0">Score Published</Badge>
+                          ) : (
+                             <Badge variant="outline" className="text-muted-foreground bg-muted/20 text-[10px] py-0 border-dashed">Pending Teacher Review</Badge>
+                          )}
+                       </div>
+                       
+                       <div className="flex justify-between items-center mt-2">
+                          <div className="flex items-center gap-2 w-full justify-between">
+                            {subInfo.hasScorecard && (
+                              <Link to={`/student/exam/${exam.id}/results`}>
+                                 <Button size="sm" variant="outline" className="h-8 text-xs bg-card border-primary/20 text-primary hover:bg-primary/10 px-3">
+                                   View Evaluated Paper
+                                 </Button>
+                              </Link>
+                            )}
+
+                            {subInfo.hasScorecard && (
+                              !grievanceStatus ? (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => openGrievanceDialog(subInfo.id)}
+                                  className="h-8 text-xs px-2 gap-1.5 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                >
+                                  <ShieldAlert className="h-3.5 w-3.5" />
+                                  Raise Grievance
+                                </Button>
+                              ) : (
+                                <Badge variant="outline" className={`text-[10px] py-0.5 ${grievanceStatus === "resolved" ? "border-success/30 text-success" : "border-warning/30 text-warning"}`}>
+                                  Grievance {grievanceStatus.charAt(0).toUpperCase() + grievanceStatus.slice(1)}
+                                </Badge>
+                              )
+                            )}
+                          </div>
+                       </div>
                     </div>
                   ) : subStatus === "terminated" ? (
                     <div className="flex items-center gap-1.5 text-xs text-destructive">
