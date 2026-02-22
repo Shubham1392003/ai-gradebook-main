@@ -76,7 +76,7 @@ const TeacherEvaluatePage = () => {
     load();
   }, [submissionId, navigate]);
 
-  const handleEvaluateOne = async (q: Question) => {
+  const handleEvaluateOne = async (q: Question, silent = false): Promise<boolean> => {
     try {
       const studentAnswer = submission.answers?.[q.id] || "No Answer Available";
       const result = await evaluateSubmissionWithGemini(
@@ -102,9 +102,46 @@ const TeacherEvaluatePage = () => {
       if (error) throw error;
 
       setEvaluations(prev => ({ ...prev, [q.id]: data }));
-      toast({ title: "Evaluation Complete", description: "The answer was successfully assessed." });
+      if (!silent) toast({ title: "Evaluation Complete", description: "The answer was successfully assessed." });
+      return true;
     } catch (err: any) {
-      toast({ title: "Evaluation Error", description: err.message, variant: "destructive" });
+      if (!silent) toast({ title: "Evaluation Error", description: err.message, variant: "destructive" });
+      return false;
+    }
+  };
+
+  const handleEvaluateAll = async () => {
+    setEvaluatingAll(true);
+    let successCount = 0;
+    let evaluatedThisRun = 0;
+    try {
+      const pendingQuestions = questions.filter(q => !evaluations[q.id]);
+
+      if (pendingQuestions.length === 0) {
+        toast({ title: "No Action Needed", description: "All questions are already evaluated." });
+        return;
+      }
+
+      toast({ title: "Bulk Evaluation Started", description: "Evaluating questions one by one. This will take some time to prevent API rate limits..." });
+
+      for (const q of pendingQuestions) {
+        if (evaluatedThisRun > 0) {
+          // Wait 4 seconds between API calls to prevent Gemini 15 RPM Free Tier Limits
+          await new Promise(resolve => setTimeout(resolve, 4000));
+        }
+
+        const success = await handleEvaluateOne(q, true);
+        if (success) successCount++;
+        evaluatedThisRun++;
+      }
+
+      if (successCount > 0) {
+        toast({ title: "Bulk Evaluation Complete", description: `Evaluated ${successCount} questions successfully.` });
+      } else {
+        toast({ title: "Evaluation Stopped", description: "Encountered persistent API errors. Try again later.", variant: "destructive" });
+      }
+    } finally {
+      setEvaluatingAll(false);
     }
   };
 
@@ -127,20 +164,25 @@ const TeacherEvaluatePage = () => {
   };
 
   const syncTotalToScorecard = async () => {
-     let totalObtained = 0;
-     Object.values(evaluations).forEach(e => { totalObtained += Number(e.marks_obtained); });
-     const totalMarks = submission.exams.total_marks;
-     const percentage = (totalObtained / totalMarks) * 100;
+     try {
+       let totalObtained = 0;
+       Object.values(evaluations).forEach(e => { totalObtained += Number(e.marks_obtained); });
+       const totalMarks = submission.exams.total_marks;
+       const percentage = (totalObtained / totalMarks) * 100;
 
-     await supabase.from("scorecards").upsert({
-       student_id: submission.student_id,
-       exam_id: submission.exam_id,
-       total_marks_obtained: totalObtained,
-       total_marks: totalMarks,
-       percentage,
-     }, { onConflict: "student_id, exam_id" });
+       const { error } = await supabase.from("scorecards").upsert({
+         student_id: submission.student_id,
+         exam_id: submission.exam_id,
+         total_marks_obtained: totalObtained,
+         total_marks: totalMarks,
+         percentage,
+       }, { onConflict: "student_id, exam_id" });
 
-     toast({ title: "Scorecard Synced", description: "Final scores have been published." });
+       if (error) throw error;
+       toast({ title: "Scorecard Synced", description: "Final scores have been published." });
+     } catch (err: any) {
+       toast({ title: "Sync Failed", description: err.message || "Failed to save final score.", variant: "destructive" });
+     }
   };
 
   if (loading) return <div className="flex min-h-[60vh] items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>;
@@ -156,9 +198,15 @@ const TeacherEvaluatePage = () => {
           <h1 className="text-2xl font-bold">Evaluate Submission</h1>
           <p className="text-muted-foreground">{submission.exams?.title} • AI Assistance</p>
         </div>
-        <Button onClick={syncTotalToScorecard} variant="outline" className="gap-2">
-          <CheckCircle2 className="h-4 w-4" /> Save Final Scorecard
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={handleEvaluateAll} disabled={evaluatingAll} variant="secondary" className="gap-2">
+            {evaluatingAll ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" /> : <BrainCircuit className="h-4 w-4" />}
+            {evaluatingAll ? "Evaluating..." : "Evaluate All"}
+          </Button>
+          <Button onClick={syncTotalToScorecard} variant="outline" className="gap-2 bg-success text-success-foreground hover:bg-success/90 border-0">
+            <CheckCircle2 className="h-4 w-4" /> Save Final Scorecard
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-6">

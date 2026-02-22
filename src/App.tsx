@@ -22,9 +22,7 @@ import ExamTakingPage from "@/pages/student/ExamTakingPage";
 import StudentEvaluatedPaperPage from "@/pages/student/StudentEvaluatedPaperPage";
 import StudentScorecardsPage from "@/pages/student/StudentScorecardsPage";
 import StudentSelfImprovementPage from "@/pages/student/StudentSelfImprovementPage";
-import {
-  TeacherAnalytics,
-} from "@/pages/SubPages";
+import TeacherAnalyticsPage from "@/pages/teacher/TeacherAnalyticsPage";
 import TeacherGrievancesPage from "@/pages/teacher/TeacherGrievancesPage";
 import StudentGrievancesPage from "@/pages/student/StudentGrievancesPage";
 import { Sparkles } from "lucide-react";
@@ -66,7 +64,7 @@ const AppRoutes = () => (
       <Route path="/teacher/evaluate/:submissionId" element={<ProtectedRoute allowedRole="teacher"><TeacherEvaluatePage /></ProtectedRoute>} />
       <Route path="/teacher/generate" element={<ProtectedRoute allowedRole="teacher"><AIQuestionGeneratorPage /></ProtectedRoute>} />
       <Route path="/teacher/grievances" element={<ProtectedRoute allowedRole="teacher"><TeacherGrievancesPage /></ProtectedRoute>} />
-      <Route path="/teacher/analytics" element={<ProtectedRoute allowedRole="teacher"><TeacherAnalytics /></ProtectedRoute>} />
+      <Route path="/teacher/analytics" element={<ProtectedRoute allowedRole="teacher"><TeacherAnalyticsPage /></ProtectedRoute>} />
 
       {/* Student routes */}
       <Route path="/student" element={<ProtectedRoute allowedRole="student"><StudentDashboard /></ProtectedRoute>} />

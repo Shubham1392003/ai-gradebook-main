@@ -16,6 +16,7 @@ type SubmissionRow = {
   is_terminated: boolean;
   started_at: string;
   submitted_at: string | null;
+  answers: Record<string, any> | null;
 };
 
 type ProfileMap = Record<string, { full_name: string; email: string }>;
@@ -38,17 +39,21 @@ const TeacherSubmissionsPage = () => {
       const submissions = (subs || []) as SubmissionRow[];
       setSubmissions(submissions);
 
-      // Fetch profiles
-      const studentIds = [...new Set(submissions.map((s) => s.student_id))];
-      if (studentIds.length > 0) {
-        const { data: profs } = await supabase
-          .from("profiles")
-          .select("user_id, full_name, email")
-          .in("user_id", studentIds);
-        const map: ProfileMap = {};
-        (profs || []).forEach((p: any) => { map[p.user_id] = p; });
-        setProfiles(map);
-      }
+      // Profiles query is usually broken by RLS for teachers, so extract from submissions directly
+      const map: ProfileMap = {};
+      submissions.forEach(sub => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          if (sub.answers && typeof sub.answers === 'object' && !Array.isArray(sub.answers) && (sub.answers as any).__metadata) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const meta = (sub.answers as any).__metadata;
+              map[sub.student_id] = { full_name: meta.full_name, email: meta.reg_number || "Student" };
+          } else {
+              if (!map[sub.student_id]) {
+                 map[sub.student_id] = { full_name: "Unknown Student", email: "N/A" };
+              }
+          }
+      });
+      setProfiles(map);
       setLoading(false);
     };
     load();

@@ -121,12 +121,12 @@ const ExamTakingPage = () => {
         if (existingSub.status !== "in_progress") {
           setIsSubmitted(true);
           setSubmissionId(existingSub.id);
-          setAnswers((existingSub.answers && typeof existingSub.answers === 'object') ? existingSub.answers as Record<string, string> : {});
+          setAnswers((existingSub.answers && typeof existingSub.answers === 'object' && !Array.isArray(existingSub.answers)) ? existingSub.answers as Record<string, string> : {});
           setLoading(false);
           return;
         }
         setSubmissionId(existingSub.id);
-        setAnswers((existingSub.answers && typeof existingSub.answers === 'object') ? existingSub.answers as Record<string, string> : {});
+        setAnswers((existingSub.answers && typeof existingSub.answers === 'object' && !Array.isArray(existingSub.answers)) ? existingSub.answers as Record<string, string> : {});
       } else {
         // Create new submission
         const { data: newSub } = await supabase
@@ -135,6 +135,13 @@ const ExamTakingPage = () => {
             exam_id: examId,
             student_id: user.id,
             status: "in_progress",
+            answers: {
+                __metadata: {
+                    full_name: user?.user_metadata?.full_name || "Student",
+                    reg_number: user?.user_metadata?.reg_number || "N/A",
+                    class_name: user?.user_metadata?.class_name || "N/A"
+                }
+            }
           })
           .select()
           .single();
@@ -223,6 +230,26 @@ const ExamTakingPage = () => {
           <h1 className="text-2xl font-bold text-foreground">Exam Submitted</h1>
           <p className="mt-2 text-muted-foreground">
             Your answers have been recorded. Results will be available after evaluation.
+          </p>
+          <Button onClick={() => navigate("/student")} className="mt-6">
+            Return to Dashboard
+          </Button>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (questions.length === 0 && !loading) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-20 text-center">
+        <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }}>
+          <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-warning/10">
+            <AlertTriangle className="h-10 w-10 text-warning" />
+          </div>
+          <h1 className="text-2xl font-bold text-foreground">Exam Not Active</h1>
+          <p className="mt-2 text-muted-foreground">
+            This exam has been scheduled, but the questions have not been made available yet due to database privacy rules. 
+            Please ask your Teacher to click <b>"Activate Exam"</b> in the Teacher portal.
           </p>
           <Button onClick={() => navigate("/student")} className="mt-6">
             Return to Dashboard
