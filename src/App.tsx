@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Navbar from "@/components/Navbar";
+import FloatingWhiteboard from "@/components/FloatingWhiteboard";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import LandingPage from "@/pages/LandingPage";
 import AuthPage from "@/pages/AuthPage";
@@ -50,6 +51,7 @@ const HomeRedirect = () => {
 const AppRoutes = () => (
   <>
     <Navbar />
+    <FloatingWhiteboard />
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/dashboard" element={<HomeRedirect />} />
