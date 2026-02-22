@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   FileText, BarChart3, Shield, GraduationCap, BookOpen,
-  TrendingUp, Award, Clock, ArrowRight, ChevronDown, ChevronUp
+  TrendingUp, Award, Clock, ArrowRight, ChevronDown, ChevronUp, BrainCircuit
 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
@@ -125,7 +125,7 @@ const StudentDashboard = () => {
     { label: "My Exams", icon: BookOpen, to: "/student/exams", desc: "View and take scheduled exams" },
     { label: "Scorecards", icon: Award, to: "/student/scorecards", desc: "Download SGPA/CGPA reports" },
     { label: "Grievances", icon: Shield, to: "/student/grievances", desc: "Appeal evaluation results" },
-    { label: "Analytics", icon: TrendingUp, to: "/student/analytics", desc: "Your performance trends" },
+    { label: "Self Improvement", icon: BrainCircuit, to: "/student/self-improvement", desc: "Read summaries and take AI tests on topics" },
   ];
 
   return (

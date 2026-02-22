@@ -182,3 +182,79 @@ IMPORTANT: Only return a valid JSON array.`;
         throw new Error("Failed to parse structured evaluated answers: " + err.message);
     }
 };
+
+export const generateStudyMaterial = async (topic: string) => {
+    const prompt = `You are an expert AI tutor. A student wants to do self-improvement on the topic: "${topic}".
+1. Write a short, easy-to-understand summary of this topic (around 100-150 words).
+2. Create exactly 3 multiple-choice questions (MCQs) to test their understanding based on the summary.
+
+Return a JSON object exactly with this structure:
+{
+  "summary": "...",
+  "questions": [
+    {
+      "text": "...",
+      "options": ["A", "B", "C", "D"],
+      "correct_answer": "..."
+    }
+  ]
+}
+IMPORTANT: Only return valid JSON.`;
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.7, responseMimeType: "application/json" }
+        }),
+    });
+
+    const data = await response.json();
+    if (data.error) throw new Error(data.error.message);
+
+    const content = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+    try {
+        const cleaned = content.replace(/```json/gi, "").replace(/```/gi, "").trim();
+        return JSON.parse(cleaned);
+    } catch (err) {
+        throw new Error("Failed to parse study material: " + (err as Error).message);
+    }
+};
+
+export const evaluateSelfImprovementTest = async (testData: { question: string, student_answer: string, correct_answer: string }[]) => {
+    const prompt = `You are an encouraging AI tutor. A student has just taken a self-improvement quiz.
+Here are the questions, their answers, and the correct answers:
+${JSON.stringify(testData, null, 2)}
+
+For each question, determine if they are correct, and provide a short, helpful explanation (1-2 sentences) of WHY the correct answer is right and clarify any misconceptions.
+
+Return a JSON array exactly with this structure:
+[
+  {
+    "is_correct": true,
+    "ai_feedback": "..."
+  }
+]
+IMPORTANT: Return ONLY a valid JSON array. Must maintain exactly the same order as the input questions.`;
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.3, responseMimeType: "application/json" }
+        }),
+    });
+
+    const data = await response.json();
+    if (data.error) throw new Error(data.error.message);
+
+    const content = data.candidates?.[0]?.content?.parts?.[0]?.text || "[]";
+    try {
+        const cleaned = content.replace(/```json/gi, "").replace(/```/gi, "").trim();
+        return JSON.parse(cleaned);
+    } catch (err) {
+        throw new Error("Failed to parse quiz evaluation: " + (err as Error).message);
+    }
+};
