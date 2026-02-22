@@ -176,13 +176,15 @@ const TeacherExamsPage = () => {
                         <Clock className="h-3 w-3" /> Schedule
                       </Button>
                     )}
-                    {exam.status === "scheduled" && !isLive && (
+                    {exam.status === "scheduled" && (
                       <>
-                        <Button size="sm" variant="outline" onClick={() => openScheduleDialog(exam.id)} className="gap-1.5 text-xs">
-                          <Clock className="h-3 w-3" /> Reschedule
-                        </Button>
+                        {!isLive && (
+                          <Button size="sm" variant="outline" onClick={() => openScheduleDialog(exam.id)} className="gap-1.5 text-xs">
+                            <Clock className="h-3 w-3" /> Reschedule
+                          </Button>
+                        )}
                         <Button size="sm" onClick={() => updateStatus(exam.id, "active")} className="gap-1.5 text-xs bg-success text-success-foreground hover:bg-success/90">
-                          <Play className="h-3 w-3" /> Force Activate
+                          <Play className="h-3 w-3" /> {isLive ? "Activate Exam" : "Force Activate"}
                         </Button>
                       </>
                     )}
