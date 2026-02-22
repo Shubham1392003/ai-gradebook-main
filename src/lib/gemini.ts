@@ -183,10 +183,10 @@ IMPORTANT: Only return a valid JSON array.`;
     }
 };
 
-export const generateStudyMaterial = async (topic: string) => {
-    const prompt = `You are an expert AI tutor. A student wants to do self-improvement on the topic: "${topic}".
-1. Write a short, easy-to-understand summary of this topic (around 100-150 words).
-2. Create exactly 3 multiple-choice questions (MCQs) to test their understanding based on the summary.
+export const generateStudyMaterial = async (topic: string, numQuestions: number = 3) => {
+    const prompt = `You are a supportive, expert AI teacher speaking directly to your student. Your student wants to learn and improve on the topic: "${topic}".
+1. Write an engaging, comprehensive theoretical explanation of this topic (around 300 words). Speak directly to the student ("You will learn...", "Imagine..."), break down complex concepts simply, use analogies, make it interesting! Act as if you are personally teaching them in a classroom.
+2. Create exactly ${numQuestions} multiple-choice questions (MCQs) to test their understanding based exactly on what you just taught them.
 
 Return a JSON object exactly with this structure:
 {

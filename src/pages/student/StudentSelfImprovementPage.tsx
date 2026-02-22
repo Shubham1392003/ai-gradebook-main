@@ -8,6 +8,9 @@ import { BrainCircuit, BookOpen, Send, CheckCircle2, XCircle, ArrowRight } from 
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
+} from "@/components/ui/select";
 
 type Question = {
   text: string;
@@ -29,6 +32,7 @@ const StudentSelfImprovementPage = () => {
   const { toast } = useToast();
   
   const [topic, setTopic] = useState("");
+  const [numQuestions, setNumQuestions] = useState("3");
   const [loadingMaterial, setLoadingMaterial] = useState(false);
   const [material, setMaterial] = useState<Material | null>(null);
   
@@ -49,7 +53,7 @@ const StudentSelfImprovementPage = () => {
     setResults(null);
     
     try {
-      const data = await generateStudyMaterial(topic);
+      const data = await generateStudyMaterial(topic, parseInt(numQuestions));
       setMaterial(data as Material);
       toast({ title: "Module Ready!", description: "Read the summary and take the quick test below." });
     } catch (error) {
@@ -112,6 +116,19 @@ const StudentSelfImprovementPage = () => {
             className="h-12 text-base"
             onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
           />
+        </div>
+        <div className="w-40 space-y-2">
+           <Label>Question Count</Label>
+           <Select value={numQuestions} onValueChange={setNumQuestions} disabled={loadingMaterial}>
+             <SelectTrigger className="h-12">
+               <SelectValue placeholder="3 Questions" />
+             </SelectTrigger>
+             <SelectContent>
+               <SelectItem value="3">3 Questions</SelectItem>
+               <SelectItem value="5">5 Questions</SelectItem>
+               <SelectItem value="10">10 Questions</SelectItem>
+             </SelectContent>
+           </Select>
         </div>
         <Button 
           onClick={handleGenerate} 
