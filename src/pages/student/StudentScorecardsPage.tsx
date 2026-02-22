@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Award, FileText, Download, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -14,6 +16,160 @@ export const StudentScorecardsPage = () => {
   const { user } = useAuth();
   const [scorecards, setScorecards] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  const handleDownload = async (scorecard: any) => {
+    if (!user) return;
+    setDownloadingId(scorecard.id);
+
+    try {
+      // 1. Get submission
+      const { data: subData } = await supabase
+        .from('submissions')
+        .select('id')
+        .eq('exam_id', scorecard.exam_id)
+        .eq('student_id', user.id)
+        .maybeSingle();
+
+      let evaluations: any[] = [];
+      if (subData) {
+        // 2. Get evaluations with questions
+        const { data: evalData } = await supabase
+          .from('evaluations')
+          .select(`
+            marks_obtained,
+            questions (
+              question_text,
+              marks,
+              order_index
+            )
+          `)
+          .eq('submission_id', subData.id);
+
+        if (evalData) {
+          evaluations = evalData;
+        }
+      }
+
+      // 3. Generate PDF
+      const doc = new jsPDF();
+
+      // Official Title
+      doc.setFontSize(22);
+      doc.setTextColor(15, 23, 42);
+      doc.text("Official Scorecard", 105, 20, { align: "center" });
+
+      // Student info block
+      doc.setFontSize(11);
+      doc.setTextColor(100, 116, 139);
+
+      doc.text("Current Exam Details:", 14, 35);
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(12);
+      doc.text(`${scorecard.exams?.title || "Unknown Exam"}`, 14, 42);
+      doc.text(`Subject: ${scorecard.exams?.subject || "Unknown"}`, 14, 49);
+      doc.text(`Date: ${new Date(scorecard.exams?.created_at || scorecard.created_at).toLocaleDateString()}`, 14, 56);
+
+      doc.setFontSize(11);
+      doc.setTextColor(100, 116, 139);
+      doc.text("Performance:", 130, 35);
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(12);
+      doc.text(`Total Marks: ${scorecard.total_marks_obtained} / ${scorecard.total_marks}`, 130, 42);
+      doc.text(`Percentage: ${Number(scorecard.percentage).toFixed(1)}%`, 130, 49);
+
+      // Separator line
+      doc.setDrawColor(226, 232, 240);
+      doc.line(14, 62, 196, 62);
+
+      // Section: Current Exam Per-Question Marks
+      doc.setFontSize(14);
+      doc.setTextColor(15, 23, 42);
+      doc.text("Question-Wise Breakdown (Current Exam)", 14, 75);
+
+      // Sort by order_index
+      evaluations.sort((a, b) => {
+        const orderA = Array.isArray(a.questions) ? a.questions[0]?.order_index || 0 : a.questions?.order_index || 0;
+        const orderB = Array.isArray(b.questions) ? b.questions[0]?.order_index || 0 : b.questions?.order_index || 0;
+        return orderA - orderB;
+      });
+
+      // Prepare table data for current exam
+      const tableData = evaluations.map((e, index) => {
+        const q = Array.isArray(e.questions) ? e.questions[0] : e.questions;
+        return [
+          (index + 1).toString(),
+          q?.question_text || "Unknown Question",
+          (q?.marks || 0).toString(),
+          (e.marks_obtained || 0).toString()
+        ];
+      });
+
+      if (tableData.length === 0) {
+        tableData.push(["-", "No questions evaluated yet.", "-", "-"]);
+      }
+
+      autoTable(doc, {
+        startY: 80,
+        head: [["Q.No.", "Question", "Max Marks", "Marks Obtained"]],
+        body: tableData,
+        theme: "grid",
+        headStyles: { fillColor: [15, 23, 42], textColor: 255 },
+        columnStyles: {
+          0: { cellWidth: 15, halign: 'center' },
+          1: { cellWidth: 'auto' },
+          2: { cellWidth: 25, halign: 'center' },
+          3: { cellWidth: 35, halign: 'center' },
+        },
+      });
+
+      // Calculate Y position for the next section safely
+      const jsDoc = doc as any;
+      let finalY = jsDoc.lastAutoTable ? jsDoc.lastAutoTable.finalY + 20 : 150;
+
+      // Section: Historical Scorecards
+      if (finalY > 250) {
+        doc.addPage();
+        finalY = 20;
+      }
+
+      doc.setFontSize(14);
+      doc.setTextColor(15, 23, 42);
+      doc.text("Historical Performance (Previous Exams)", 14, finalY);
+
+      // Get past scorecards excluding the current one
+      const pastExams = scorecards.filter((s) => s.id !== scorecard.id);
+      const pastData = pastExams.map((s, idx) => {
+        return [
+          (idx + 1).toString(),
+          s.exams?.title || "Unknown Exam",
+          s.exams?.subject || "Unknown",
+          `${s.total_marks_obtained} / ${s.total_marks}`,
+          `${Number(s.percentage).toFixed(1)}%`
+        ];
+      });
+
+      if (pastData.length === 0) {
+        pastData.push(["-", "No previous exams taken.", "-", "-", "-"]);
+      }
+
+      autoTable(doc, {
+        startY: finalY + 5,
+        head: [["S.No.", "Exam Title", "Subject", "Score", "Percentage"]],
+        body: pastData,
+        theme: "striped",
+        headStyles: { fillColor: [71, 85, 105], textColor: 255 },
+      });
+
+      // Save PDF
+      doc.save(`Scorecard_${scorecard.exams?.title?.replace(/\s+/g, "_") || "Exam"}.pdf`);
+
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   useEffect(() => {
     const fetchScorecards = async () => {
@@ -122,9 +278,19 @@ export const StudentScorecardsPage = () => {
                 </div>
 
                 <div className="flex gap-3">
-                   <Button variant="outline" className="w-full gap-2 cursor-pointer relative" onClick={() => window.print()}>
-                     <Download className="h-4 w-4" /> Download
-                   </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full gap-2 cursor-pointer relative"
+                    onClick={() => handleDownload(scorecard)}
+                    disabled={downloadingId === scorecard.id}
+                  >
+                    {downloadingId === scorecard.id ? (
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    ) : (
+                      <Download className="h-4 w-4" />
+                    )}
+                    {downloadingId === scorecard.id ? "Generating..." : "Download"}
+                  </Button>
                 </div>
               </motion.div>
             ))}
