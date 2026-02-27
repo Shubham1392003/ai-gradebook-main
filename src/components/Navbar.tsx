@@ -111,12 +111,13 @@ const Navbar = () => {
                 )}
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="icon"
                   onClick={signOut}
-                  className="gap-1.5 rounded-full h-8 flex-shrink-0 text-foreground/70 hover:text-primary hover:bg-primary/5"
+                  title="Sign Out"
+                  aria-label="Sign Out"
+                  className="rounded-full h-8 w-8 flex-shrink-0 text-foreground/70 hover:text-red-600 hover:bg-red-100/50 transition-colors"
                 >
-                  <LogOut className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline text-xs whitespace-nowrap">Sign Out</span>
+                  <LogOut className="h-4 w-4" />
                 </Button>
               </>
             ) : (
