@@ -67,6 +67,22 @@ const WebcamMonitor = ({
     }
   }, []);
 
+  const stopCamera = useCallback(() => {
+    setIsActive(false);
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+      audioContextRef.current.close().catch(() => {});
+      audioContextRef.current = null;
+    }
+    analyserRef.current = null;
+  }, []);
+
   const takeScreenshotForEvidence = useCallback(async (): Promise<string | null> => {
     if (!videoRef.current || !canvasRef.current || !isActive) return null;
 
@@ -147,14 +163,14 @@ const WebcamMonitor = ({
   useEffect(() => {
     if (enabled) {
       startCamera();
+    } else {
+      stopCamera();
     }
     return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((t) => t.stop());
-      }
+      stopCamera();
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [enabled, startCamera]);
+  }, [enabled, startCamera, stopCamera]);
 
   // Periodic screenshot capture
   useEffect(() => {

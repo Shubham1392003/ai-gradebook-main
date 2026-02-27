@@ -1,81 +1,265 @@
-# AI Gradebook & Secure Exam Platform
+<div align="center">
 
-A modern, robust, and secure serverless application for creating, taking, and evaluating online exams. This platform features a powerful client-side anti-cheat engine built with TensorFlow.js to ensure academic integrity without compromising privacy by keeping video processing local.
+# 🎯 AI Gradebook & Secure Exam Platform
 
-## 🛠️ Tools & Technologies Used
+### Craft, Take, and Evaluate Secure Exams with AI-Powered Proctoring
 
-### Frontend (Client-Side)
-* **React 18 & Vite:** The core framework and build tool for a fast, responsive user interface and lightning-fast hot module replacement.
-* **TypeScript:** For strict type-checking, robust code architecture, and fewer runtime errors.
-* **Tailwind CSS & Shadcn UI (Radix UI):** For rapid, accessible, and highly customizable UI component design.
-* **React Router DOM:** For seamless and secure navigation between teacher and student dashboards.
-* **Framer Motion:** For fluid component transitions and micro-animations that enhance the user experience.
-* **jsPDF & jsPDF-AutoTable:** Used for generating downloadable, structured, and official PDF scorecards natively in the browser.
+[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen?style=for-the-badge&logo=vercel)](#)
+[![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
+[![TensorFlow.js](https://img.shields.io/badge/TensorFlow.js-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white)](https://www.tensorflow.org/js)
 
-### Proctoring / Anti-Cheat Engine
-* **TensorFlow.js & Blazeface:** Google's lightweight machine learning model running directly inside the browser memory. It reliably detects multiple faces via the webcam to prevent unauthorized assistance.
-* **Browser APIs:** 
-  * `MediaDevices API` for webcam access.
-  * `Page Visibility API` for detecting tab switching.
-  * `Window Focus API` for detecting if the user clicks outside the exam window.
-  * Event listeners for preventing copy/paste and context menus.
+*A modern, robust platform for seamless online exams featuring real-time AI-powered webcam proctoring, secure evaluation workflows, and instant scorecard generation. Built with React, TypeScript, and Supabase.*
 
-### Backend (Serverless / Database)
-* **Supabase:** Acts as the complete backend-as-a-service (BaaS), handling:
-  * **PostgreSQL Database:** Storing users, exams, questions, submissions, warnings, evaluations, and scorecards.
-  * **Authentication:** Handling student and teacher login flows securely.
-  * **Storage (Buckets):** Securely saving periodic photo evidence captures from the webcam monitor.
+</div>
 
 ---
 
-## 🏗️ Architecture Overview
+## ✨ Features at a Glance
 
-The application follows a standard **Serverless Client-Server Architecture** utilizing a BaaS (Supabase), ensuring high availability and scalability without managing servers.
+<table>
+<tr>
+<td width="50%">
 
-```text
-[ User / Browser ] 
-        |
-        |  (React, TypeScript, Tailwind, TensorFlow.js)
-        v
-[ Frontend Application Layer ] 
-   ├─ Teacher Dashboard (Exam creation, evidence review, grading)
-   ├─ Student Dashboard (Exam taking, scorecards, grievances)
-   └─ Anti-Cheat Engine (Webcam monitoring, system locks)
-        |
-        |  (Supabase JS Client via REST/WebSockets)
-        v
-[ Supabase Backend Layer ]
-   ├─ Auth Service (JWT based authentication & authorization)
-   ├─ PostgreSQL Database (exams, submissions, cheating_logs, evaluations tables)
-   └─ Storage Service (Webcam photo evidence bucket)
+### 🎯 Core Features
+- 📝 **Secure Exam Creation** - Flexible question types (MCQ, MSQ, Theory)
+- 🤖 **AI Proctoring Engine** - Real-time face detection using TensorFlow.js
+- 📸 **Automated Evidence Capture** - Silent screenshots for cheating violations
+- 📊 **Teacher Dashboard** - Comprehensive tracking and evaluation system
+- 🌓 **Dark Mode** - Beautiful dark theme support for modern aesthetics
+- 📱 **Responsive Design** - Works perfectly on all devices
+
+</td>
+<td width="50%">
+
+### 🚀 Advanced Features
+- 🎓 **Automated Scorecards** - Generate official PDFs via jsPDF natively
+- 💾 **Cloud Storage** - Secure evidence logging backed by Supabase
+- ⚖️ **Grievance System** - Built-in student appeal workflows
+- 🚫 **Browser Lockdown** - Tab-switch detection & copy-paste prevention
+- 🛡️ **Role-Based Access** - Distinct Teacher and Student workspaces
+- 🚀 **Serverless Architecture** - Highly scalable and easy to maintain
+
+</td>
+</tr>
+</table>
+
+---
+
+## 🚀 Tech Stack
+
+<div align="center">
+
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-43853D?style=for-the-badge&logo=node.js&logoColor=white)
+![TensorFlow.js](https://img.shields.io/badge/TensorFlow.js-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white)
+
+</div>
+
+### Frontend
+- **React 18** with TypeScript
+- **Vite** for blazing fast builds
+- **Tailwind CSS** + **Shadcn UI** components
+- **React Router** for secure, role-based navigation
+- **jsPDF** & **jsPDF-AutoTable** for scorecard generation
+- **Framer Motion** for fluid micro-animations
+
+### Backend & Database
+- **Supabase** (PostgreSQL) as a Backend-as-a-Service
+- **Supabase Storage** for hosting photo evidence
+- **Row-Level Security** policies directly protecting exam integrity
+- **JWT Authentication** for Teachers and Students
+
+### AI & Proctoring Engine
+- **TensorFlow.js** executing directly inside the browser
+- **Blazeface** for lightweight, privacy-preserving face tracking
+- Native **Browser MediaDevices & Focus APIs**
+
+---
+
+## 📂 Project Structure
+
+```
+ai-gradebook-main/
+│
+├── 📁 src/
+│   ├── 📁 components/
+│   │   ├── 📁 exam/           # Proctoring (WebcamMonitor) & exam UI
+│   │   ├── 📁 ui/             # Shadcn UI reusable components
+│   │   └── ...
+│   ├── 📁 pages/
+│   │   ├── 🎓 student/        # Student dashboard, exam taking, scorecards
+│   │   ├── 👨‍🏫 teacher/        # Teacher dashboard, evidence review, grading
+│   │   └── ...
+│   ├── 📁 hooks/
+│   │   └── useAntiCheat.tsx   # Core tracking and violation logic
+│   ├── 📁 integrations/
+│   │   └── supabase/          # Supabase client & generated types
+│   └── 🎨 index.css           # Global Tailwind environment
+│
+├── 📦 package.json            # Project metadata & dependencies
+└── 📖 README.md               # You are here!
 ```
 
 ---
 
-## 🔄 Core Application Workflows
+## �️ How It Works
 
-### A. Exam Creation Workflow (Teacher)
-1. **Setup:** Teacher logs in and creates a new exam, specifying the Title, Subject, Duration, Total marks, and Warning limits.
-2. **Drafting:** Teacher adds questions to the exam. Supports various formats like Multiple Choice, Multiple Select, or Subjective Theory.
-3. **Publishing:** Teacher schedules the exam and sets it to "Published", making it visible to students of that particular class.
+### 1️⃣ **Exam Creation Workflow (Teacher)**
+```
+Setup Details (Title, Subject, Warning Limits) 
+     ↓
+Drafting Questions (MCQ, MSQ, Subjective) 
+     ↓
+Publish and Schedule for Students
+```
 
-### B. Exam Taking & Anti-Cheat Workflow (Student)
-1. **Entry:** Student clicks "Start Exam". The app requires and verifies webcam permissions to proceed.
-2. **Initialization:** A submission record is created in Supabase (`status: in_progress`). The `@tensorflow-models/blazeface` AI model loads into the browser memory.
-3. **Monitoring:** 
-   * As the student takes the test, the camera silently analyzes the video feed locally. 
-   * If a second face is detected, or the student switches tabs, copies/pastes, or clicks out, a warning is triggered.
-   * A photo is snapped via the canvas and uploaded to Supabase Storage. The infraction is logged into `cheating_logs`.
-   * A cooldown period prevents rapid, unfair warning accumulation.
-4. **Enforcement:** If infractions cross the allowed threshold (e.g., 3 warnings), the exam instantly Auto-Submits and flags the student.
-5. **Completion:** The secure exam submits all answers to the database either when the student finishes or the timer runs out.
+### 2️⃣ **AI Anti-Cheat Workflow (Student)**
+```javascript
+// Frontend: src/components/exam/WebcamMonitor.tsx
+// Local Browser Anti-Cheat utilizing TensorFlow
+const model = await blazeface.load();
+const predictions = await model.estimateFaces(videoRef.current, false);
 
-### C. Evaluation & Review Workflow (Teacher)
-1. **Evidence Check:** Teacher reviews submissions, checking the auto-collected photo evidence for cheating flags to verify exam integrity.
-2. **Grading:** Teacher views the answers. Answers can be marked manually or auto-evaluated by AI components (if configured).
-3. **Publish Scorecard:** Teacher finalizes the evaluation and publishes the scorecard. 
+if (predictions.length > 1) {
+  onWarning("Multiple people detected!", "multiple_faces");
+} else if (predictions.length === 0) {
+  onWarning("No face detected on camera!", "missing_face");
+}
+```
+If infractions cross the allowed threshold, a snapshot evidence is taken via HTML5 Canvas, sent to Supabase Storage, and the exam is instantly auto-submitted.
 
-### D. Result Workflow (Student)
-1. **View:** Student logs in to see their grade percentage and overall performance.
-2. **Download:** Student clicks download, which triggers `jsPDF` to compile their per-question marks into a structured, official PDF document.
-3. **Grievance:** If the student feels the strict anti-cheat tracking or grading was unfair, they can raise a grievance to the teacher for re-evaluation.
+### 3️⃣ **Evaluation & Review Workflow**
+```
+Review Auto-Collected Photo Evidence → Grade Subjective Answers → Publish Official Scorecard
+```
+
+### 4️⃣ **Automated Scorecards generation (jsPDF)**
+```javascript
+// Frontend: Automatically structures the student's evaluated marks into a PDF
+const doc = new jsPDF();
+doc.text(`Scorecard for ${exam.title}`, 14, 20);
+autoTable(doc, { 
+  head: [['Question', 'Marks Awarded', 'Max Marks']],
+  body: examData.results,
+});
+doc.save(`${student_name}_scorecard.pdf`);
+```
+
+---
+
+## 🎯 API Integration & Database Schema
+
+### Supabase Database Architecture
+```sql
+-- Exams Table
+CREATE TABLE exams (
+  id UUID PRIMARY KEY,
+  teacher_id UUID REFERENCES auth.users,
+  title TEXT,
+  subject TEXT,
+  duration_minutes INTEGER,
+  warning_limit INTEGER DEFAULT 3
+);
+
+-- Submissions Table
+CREATE TABLE submissions (
+  id UUID PRIMARY KEY,
+  exam_id UUID REFERENCES exams,
+  student_id UUID REFERENCES auth.users,
+  status TEXT, -- 'in_progress', 'submitted', 'terminated'
+  answers JSONB
+);
+
+-- Cheating Logs (Evidence)
+CREATE TABLE cheating_logs (
+  id UUID PRIMARY KEY,
+  submission_id UUID REFERENCES submissions,
+  event_type TEXT,
+  evidence_url TEXT, -- Points to Supabase Storage Bucket
+  description TEXT
+);
+```
+
+---
+
+## 🚧 Setup & Installation
+
+### Prerequisites
+- Node.js 18+
+- Supabase account & project
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/Shubham1392003/ai-gradebook-main.git
+cd ai-gradebook-main
+```
+
+### 2. Install Dependencies
+```bash
+npm install
+```
+
+### 3. Environment Variables
+Create a `.env` file in the root directory:
+```env
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+### 4. Run the Application
+```bash
+npm run dev
+```
+Visit `http://localhost:8080` (or the port Vite outputs)
+
+### 5. Deployment
+This application can easily be deployed onto Vercel, Netlify, or any static hosting provider.
+```bash
+npm run build
+```
+
+---
+
+## 💡 Key Features Breakdown
+
+### 🤖 AI Proctoring Engine
+- Local, browser-based execution ensures total student privacy (video is never streamed to external servers).
+- Tracks missing faces, multiple faces, excessive background audio, and physical tab-switching.
+- Implements cooldown delays so honest mistakes aren't rapidly double-punished.
+
+### 🎓 Dynamic Grading System
+- Automatically grades multiple-choice/select questions upon submission.
+- Allows teachers to seamlessly override or assign partial points for long-form answers.
+
+### 📊 Comprehensive Dashboards
+- **Teacher View:** Deep aggregate performance statistics, student-by-student evidence reviews, built with Recharts.
+- **Student View:** Active timers, countdowns, grievance submissions, and seamless result downloading.
+
+---
+
+## 👨‍💻 Author
+
+<div align="center">
+
+### **Developed & Built by Shubham Madhav Kendre**
+
+*AI/ML & Full Stack Developer*
+
+[![Portfolio](https://img.shields.io/badge/Portfolio-FF5722?style=for-the-badge&logo=google-chrome&logoColor=white)](https://sk-coral.vercel.app/)
+[![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Shubham1392003)
+[![Instagram](https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white)](https://www.instagram.com/shubham.x003/)
+
+</div>
+
+---
+
+<div align="center">
+
+### ⭐ Star this repo if you found it helpful!
+
+**Made with ❤️ and lots of ☕**
+
+</div>

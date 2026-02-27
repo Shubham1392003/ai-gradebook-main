@@ -14,7 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Clock, Send, AlertTriangle, ChevronLeft, ChevronRight, Shield
+  Clock, Send, AlertTriangle, ChevronLeft, ChevronRight, Shield, Camera
 } from "lucide-react";
 
 type Question = {
@@ -52,6 +52,7 @@ const ExamTakingPage = () => {
   const [showWarning, setShowWarning] = useState(false);
   const [lastEvent, setLastEvent] = useState("");
   const [loading, setLoading] = useState(true);
+  const [hasStarted, setHasStarted] = useState(false);
 
   // Anti-cheat
   const handleWarning = useCallback((count: number, eventType: string) => {
@@ -165,7 +166,7 @@ const ExamTakingPage = () => {
 
   // Timer
   useEffect(() => {
-    if (isTerminated || isSubmitted || timeLeft <= 0) return;
+    if (!hasStarted || isTerminated || isSubmitted || timeLeft <= 0) return;
     const t = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
@@ -208,6 +209,38 @@ const ExamTakingPage = () => {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (!hasStarted && !isTerminated && !isSubmitted && questions.length > 0) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-20 text-center">
+        <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }}>
+          <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
+            <Camera className="h-10 w-10 text-primary" />
+          </div>
+          <h1 className="text-2xl font-bold text-foreground">Camera Permission Required</h1>
+          <p className="mt-4 text-muted-foreground">
+            Before starting the exam, you need to provide camera and microphone permissions for securing the exam environment.
+          </p>
+          <Button 
+            onClick={async () => {
+              try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                // We briefly stop the stream here so WebcamMonitor can initialize it normally.
+                stream.getTracks().forEach(t => t.stop());
+                setHasStarted(true);
+              } catch (e) {
+                toast({ title: "Permission Denied", description: "Camera and microphone access is required to take this exam.", variant: "destructive" });
+              }
+            }} 
+            className="mt-6 gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            <Camera className="h-4 w-4" />
+            Grant Permissions & Start Exam
+          </Button>
+        </motion.div>
       </div>
     );
   }
