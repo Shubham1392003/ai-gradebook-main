@@ -50,9 +50,9 @@ const Navbar = () => {
       >
         <div className="flex h-14 items-center justify-between px-6">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2 flex-shrink-0">
             <Sparkles className="h-5 w-5 text-primary" />
-            <span className="text-base font-extrabold text-foreground tracking-tight">
+            <span className="text-base font-extrabold text-foreground tracking-tight whitespace-nowrap">
               FairGrade AI
             </span>
           </Link>
@@ -66,7 +66,7 @@ const Navbar = () => {
                 <Link
                   key={link.to}
                   to={link.to}
-                  className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-200 ${active
+                  className={`flex flex-shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-200 whitespace-nowrap ${active
                     ? "text-primary"
                     : "text-foreground/70 hover:text-primary"
                     }`}
@@ -78,7 +78,7 @@ const Navbar = () => {
             })}
             <Link
               to="/docs"
-              className="flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium text-foreground/70 hover:text-primary transition-colors"
+              className="flex flex-shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium text-foreground/70 hover:text-primary transition-colors whitespace-nowrap"
             >
               <BookOpen className="h-4 w-4" />
               Docs
@@ -87,7 +87,7 @@ const Navbar = () => {
               href="https://github.com/Shubham1392003/ai-gradebook-main"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium text-foreground/70 hover:text-primary transition-colors"
+              className="flex flex-shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium text-foreground/70 hover:text-primary transition-colors whitespace-nowrap"
             >
               <Github className="h-4 w-4" />
               GitHub
@@ -95,17 +95,17 @@ const Navbar = () => {
           </div>
 
           {/* Right side */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             {user ? (
               <>
                 {role === "student" ? (
                   <StudentProfileDialog>
-                    <button className="hidden text-xs font-semibold sm:block px-3 py-1 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors cursor-pointer">
+                    <button className="hidden text-xs font-semibold sm:block px-3 py-1 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors cursor-pointer whitespace-nowrap max-w-[150px] truncate">
                       {user.user_metadata?.full_name || "Student"}
                     </button>
                   </StudentProfileDialog>
                 ) : (
-                  <span className="hidden text-xs font-semibold sm:block px-3 py-1 rounded-full bg-primary/10 text-primary">
+                  <span className="hidden text-xs font-semibold sm:block px-3 py-1 rounded-full bg-primary/10 text-primary whitespace-nowrap">
                     Teacher
                   </span>
                 )}
@@ -113,24 +113,24 @@ const Navbar = () => {
                   variant="ghost"
                   size="sm"
                   onClick={signOut}
-                  className="gap-1.5 rounded-full h-8 text-foreground/70 hover:text-primary hover:bg-primary/5"
+                  className="gap-1.5 rounded-full h-8 flex-shrink-0 text-foreground/70 hover:text-primary hover:bg-primary/5"
                 >
                   <LogOut className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline text-xs">Sign Out</span>
+                  <span className="hidden sm:inline text-xs whitespace-nowrap">Sign Out</span>
                 </Button>
               </>
             ) : (
-              <Link to="/auth">
+              <Link to="/auth" className="flex-shrink-0">
                 <Button
                   size="sm"
-                  className="rounded-full h-9 text-xs font-bold px-6 bg-primary text-primary-foreground hover:bg-primary/90 shadow-md shadow-primary/20"
+                  className="rounded-full h-9 text-xs font-bold px-6 bg-primary text-primary-foreground hover:bg-primary/90 shadow-md shadow-primary/20 whitespace-nowrap"
                 >
                   Start Learning
                 </Button>
               </Link>
             )}
             <button
-              className="md:hidden rounded-full p-1.5 text-foreground/70 hover:bg-muted"
+              className="md:hidden flex-shrink-0 rounded-full p-1.5 text-foreground/70 hover:bg-muted"
               onClick={() => setMobileOpen(!mobileOpen)}
             >
               {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
